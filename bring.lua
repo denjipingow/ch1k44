@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.2
+-- Version: 3.2 - Modified to Bring All Players (Real Position)
 
 -- Instances:
 
@@ -35,7 +35,7 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(1, 0, 0.35, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Bring Parts by FayintXHub"
+Label.Text = "Bring All Players by FayintXHub"
 Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
@@ -48,10 +48,10 @@ Button.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
 Button.BackgroundTransparency = 0.5
 Button.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Button.BorderSizePixel = 0
-Button.Position = UDim2.new(0.183284417, 0, 0.45, 0)
-Button.Size = UDim2.new(0.629427791, 0, 0.45, 0)
+Button.Position = UDim2.new(0.183284417, 0, 0.5, 0)
+Button.Size = UDim2.new(0.629427791, 0, 0.4, 0)
 Button.Font = Enum.Font.Nunito
-Button.Text = "Bring | Off"
+Button.Text = "Bring Players | Off"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.TextScaled = true
 Button.TextSize = 28.000
@@ -67,15 +67,6 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-
-local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-
--- Update character ketika respawn
-LocalPlayer.CharacterAdded:Connect(function(char)
-	character = char
-	humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-end)
 
 mainStatus = true
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
@@ -95,8 +86,7 @@ Part.Transparency = 1
 if not getgenv().Network then
 	getgenv().Network = {
 		BaseParts = {},
-		-- Velocity 30x lipat: 14.46262424 * 30 = 433.8787272
-		Velocity = Vector3.new(433.8787272, 433.8787272, 433.8787272)
+		Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
 	}
 
 	Network.RetainPart = function(Part)
@@ -122,115 +112,203 @@ if not getgenv().Network then
 	EnablePartControl()
 end
 
-local function ForcePart(v)
-	-- HANYA UNANCHORED PARTS yang akan ditarik
-	if v:IsA("BasePart") and not v.Anchored then
-		-- Skip parts dari character/humanoid
-		if v.Parent:FindFirstChildOfClass("Humanoid") or v.Parent:FindFirstChild("Head") or v.Name == "Handle" then
-			return
+local bringActive = false
+
+local function BringPlayerCharacter(character)
+	if not character then return end
+	
+	-- Skip if it's local player
+	if character == LocalPlayer.Character then return end
+	
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	
+	if not hrp then return end
+	
+	-- Disable humanoid physics
+	if humanoid then
+		humanoid:ChangeState(11) -- Physics state
+		humanoid.PlatformStand = true
+	end
+	
+	-- Add to network control
+	Network.RetainPart(hrp)
+	
+	-- Remove all body movers and constraints
+	for _, child in ipairs(hrp:GetChildren()) do
+		if child:IsA("BodyMover") or child:IsA("RocketPropulsion") or 
+		   child:IsA("AlignPosition") or child:IsA("Torque") then
+			child:Destroy()
 		end
-		
-		-- Skip jika sudah memiliki AlignPosition dari script ini
-		if v:FindFirstChild("AlignPosition") and v:FindFirstChild("Attachment") then
-			return
+	end
+	
+	-- Clean existing attachments except the original ones
+	for _, child in ipairs(hrp:GetChildren()) do
+		if child:IsA("Attachment") and child.Name ~= "RootAttachment" and 
+		   child.Name ~= "RootRigAttachment" then
+			child:Destroy()
 		end
-		
-		-- Hapus body movers yang ada
-		for _, x in ipairs(v:GetChildren()) do
-			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") then
-				x:Destroy()
+	end
+	
+	-- Create new constraints
+	hrp.CanCollide = false
+	hrp.Massless = true
+	
+	local Torque = Instance.new("Torque")
+	Torque.Name = "BringTorque"
+	Torque.Torque = Vector3.new(100000, 100000, 100000)
+	Torque.Parent = hrp
+	
+	local AlignPosition = Instance.new("AlignPosition")
+	AlignPosition.Name = "BringAlign"
+	AlignPosition.MaxForce = math.huge
+	AlignPosition.MaxVelocity = math.huge
+	AlignPosition.Responsiveness = 200
+	AlignPosition.ApplyAtCenterOfMass = true
+	AlignPosition.ReactionForceEnabled = false
+	AlignPosition.RigidityEnabled = true
+	AlignPosition.Parent = hrp
+	
+	local Attachment2 = Instance.new("Attachment")
+	Attachment2.Name = "BringAttachment"
+	Attachment2.Parent = hrp
+	
+	Torque.Attachment0 = Attachment2
+	AlignPosition.Attachment0 = Attachment2
+	AlignPosition.Attachment1 = Attachment1
+	
+	-- Disable all other body parts collision
+	for _, part in ipairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+			if part.Name ~= "HumanoidRootPart" then
+				part.Massless = true
 			end
 		end
-		
-		-- Hapus attachment/constraint lama jika ada
-		if v:FindFirstChild("Attachment") then
-			v:FindFirstChild("Attachment"):Destroy()
-		end
-		if v:FindFirstChild("AlignPosition") then
-			v:FindFirstChild("AlignPosition"):Destroy()
-		end
-		if v:FindFirstChild("Torque") then
-			v:FindFirstChild("Torque"):Destroy()
-		end
-		
-		v.CanCollide = false
-		
-		-- Torque 30x lipat: 100000 * 30 = 3000000
-		local Torque = Instance.new("Torque", v)
-		Torque.Torque = Vector3.new(3000000, 3000000, 3000000)
-		
-		local AlignPosition = Instance.new("AlignPosition", v)
-		local Attachment2 = Instance.new("Attachment", v)
-		
-		Torque.Attachment0 = Attachment2
-		AlignPosition.MaxForce = math.huge
-		AlignPosition.MaxVelocity = math.huge
-		-- Responsiveness 30x lipat: 200 * 30 = 6000
-		AlignPosition.Responsiveness = 6000
-		AlignPosition.Attachment0 = Attachment2
-		AlignPosition.Attachment1 = Attachment1
 	end
 end
 
-local blackHoleActive = false
-local DescendantAddedConnection
-local UpdateConnection
-
-local function toggleBlackHole()
-	blackHoleActive = not blackHoleActive
-	if blackHoleActive then
-		Button.Text = "Bring Parts | On"
-		
-		-- Apply ke semua unanchored parts yang ada
-		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("BasePart") and not v.Anchored then
-				ForcePart(v)
+local function StopBringing()
+	-- Clean up all players
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local character = player.Character
+			local hrp = character:FindFirstChild("HumanoidRootPart")
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			
+			if hrp then
+				-- Remove constraints
+				for _, child in ipairs(hrp:GetChildren()) do
+					if child.Name == "BringAttachment" or child.Name == "BringAlign" or 
+					   child.Name == "BringTorque" then
+						child:Destroy()
+					end
+				end
+				
+				-- Re-enable collision
+				hrp.CanCollide = true
+				hrp.Massless = false
+			end
+			
+			-- Reset humanoid
+			if humanoid then
+				humanoid.PlatformStand = false
+				humanoid:ChangeState(3) -- Running state
+			end
+			
+			-- Re-enable collision for all body parts
+			for _, part in ipairs(character:GetDescendants()) do
+				if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+					part.Massless = false
+					if part.Name == "Head" or part.Name:match("Leg") or 
+					   part.Name:match("Arm") or part.Name:match("Torso") then
+						part.CanCollide = false -- Keep these false for normal roblox behavior
+					end
+				end
 			end
 		end
+	end
+	
+	-- Clear network parts related to players
+	local newBaseParts = {}
+	for _, part in pairs(Network.BaseParts) do
+		if part.Name ~= "HumanoidRootPart" then
+			table.insert(newBaseParts, part)
+		end
+	end
+	Network.BaseParts = newBaseParts
+end
 
-		-- Monitor parts baru yang muncul
-		DescendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
-			if blackHoleActive and v:IsA("BasePart") and not v.Anchored then
-				task.wait(0.1) -- Tunggu sebentar agar part fully loaded
-				ForcePart(v)
+local playerConnections = {}
+
+local function setupPlayerBring(player)
+	if player == LocalPlayer then return end
+	
+	-- Handle current character
+	if player.Character then
+		BringPlayerCharacter(player.Character)
+	end
+	
+	-- Handle character respawn
+	if playerConnections[player] then
+		playerConnections[player]:Disconnect()
+	end
+	
+	playerConnections[player] = player.CharacterAdded:Connect(function(character)
+		if bringActive then
+			wait(0.5) -- Wait for character to load
+			BringPlayerCharacter(character)
+		end
+	end)
+end
+
+local function toggleBring()
+	bringActive = not bringActive
+	
+	if bringActive then
+		Button.Text = "Bring Players | On"
+		
+		local myCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+		local myHRP = myCharacter:WaitForChild("HumanoidRootPart")
+		
+		-- Setup all current players
+		for _, player in ipairs(Players:GetPlayers()) do
+			setupPlayerBring(player)
+		end
+		
+		-- Handle new players
+		playerConnections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
+			if bringActive then
+				setupPlayerBring(player)
 			end
 		end)
-
-		-- Update posisi target secara real-time
-		UpdateConnection = RunService.RenderStepped:Connect(function()
-			if blackHoleActive and humanoidRootPart then
-				-- Jarak 30x lipat: -50 * 30 = -1500 studs ke bawah
-				Attachment1.WorldCFrame = humanoidRootPart.CFrame * CFrame.new(0, -1500, 0)
+		
+		-- Handle players leaving
+		playerConnections.PlayerRemoving = Players.PlayerRemoving:Connect(function(player)
+			if playerConnections[player] then
+				playerConnections[player]:Disconnect()
+				playerConnections[player] = nil
+			end
+		end)
+		
+		-- Update attachment position continuously
+		playerConnections.UpdatePosition = RunService.RenderStepped:Connect(function()
+			if bringActive and myCharacter and myHRP then
+				Attachment1.WorldCFrame = myHRP.CFrame
 			end
 		end)
 	else
-		Button.Text = "Bring Parts | Off"
+		Button.Text = "Bring Players | Off"
+		StopBringing()
 		
-		-- Disconnect semua connection
-		if DescendantAddedConnection then
-			DescendantAddedConnection:Disconnect()
+		-- Disconnect all connections
+		for key, connection in pairs(playerConnections) do
+			connection:Disconnect()
 		end
-		if UpdateConnection then
-			UpdateConnection:Disconnect()
-		end
-		
-		-- Hapus semua AlignPosition dan Torque yang dibuat
-		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("BasePart") then
-				if v:FindFirstChild("AlignPosition") then
-					v:FindFirstChild("AlignPosition"):Destroy()
-				end
-				if v:FindFirstChild("Torque") then
-					v:FindFirstChild("Torque"):Destroy()
-				end
-				if v:FindFirstChild("Attachment") then
-					v:FindFirstChild("Attachment"):Destroy()
-				end
-			end
-		end
+		playerConnections = {}
 	end
 end
 
 Button.MouseButton1Click:Connect(function()
-	toggleBlackHole()
+	toggleBring()
 end)
