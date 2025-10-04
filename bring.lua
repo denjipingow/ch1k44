@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.3 with adjustable controls
+-- Version: 3.2
 
 -- Instances:
 
@@ -12,12 +12,6 @@ local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
 local Button = Instance.new("TextButton")
 local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
 
--- New Controls
-local ForceLabel = Instance.new("TextLabel")
-local ForceBox = Instance.new("TextBox")
-local ResponseLabel = Instance.new("TextLabel")
-local ResponseBox = Instance.new("TextBox")
-
 --Properties:
 
 Gui.Name = "Gui"
@@ -29,8 +23,8 @@ Main.Parent = Gui
 Main.BackgroundColor3 = Color3.fromRGB(75, 75, 75)
 Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.335954279, 0, 0.442361975, 0) -- Adjusted position
-Main.Size = UDim2.new(0.240350261, 0, 0.266880623, 0) -- Increased height for new controls
+Main.Position = UDim2.new(0.335954279, 0, 0.542361975, 0)
+Main.Size = UDim2.new(0.240350261, 0, 0.166880623, 0)
 Main.Active = true
 Main.Draggable = true
 
@@ -41,8 +35,8 @@ Box.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
 Box.BackgroundTransparency = 0.5
 Box.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Box.BorderSizePixel = 0
-Box.Position = UDim2.new(0.0980926454, 0, 0.13, 0)
-Box.Size = UDim2.new(0.801089942, 0, 0.18, 0)
+Box.Position = UDim2.new(0.0980926454, 0, 0.218712583, 0)
+Box.Size = UDim2.new(0.801089942, 0, 0.364963502, 0)
 Box.FontFace = Font.new("rbxasset://fonts/families/SourceSansSemibold.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 Box.PlaceholderText = "Player here"
 Box.Text = ""
@@ -58,81 +52,13 @@ Label.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
 Label.BackgroundTransparency = 0.5
 Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
-Label.Size = UDim2.new(1, 0, 0.1, 0)
+Label.Size = UDim2.new(1, 0, 0.160583943, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Bring Unanchored Parts by FayintXHub"
+Label.Text = "Bring Parts by FayintXHub"
 Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
 Label.TextWrapped = true
-
--- Force Label
-ForceLabel.Name = "ForceLabel"
-ForceLabel.Parent = Main
-ForceLabel.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-ForceLabel.BackgroundTransparency = 1
-ForceLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ForceLabel.BorderSizePixel = 0
-ForceLabel.Position = UDim2.new(0.05, 0, 0.33, 0)
-ForceLabel.Size = UDim2.new(0.4, 0, 0.1, 0)
-ForceLabel.Font = Enum.Font.Nunito
-ForceLabel.Text = "Force:"
-ForceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-ForceLabel.TextScaled = true
-ForceLabel.TextSize = 14.000
-ForceLabel.TextWrapped = true
-ForceLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Force Box
-ForceBox.Name = "ForceBox"
-ForceBox.Parent = Main
-ForceBox.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-ForceBox.BackgroundTransparency = 0.5
-ForceBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ForceBox.BorderSizePixel = 0
-ForceBox.Position = UDim2.new(0.45, 0, 0.33, 0)
-ForceBox.Size = UDim2.new(0.45, 0, 0.1, 0)
-ForceBox.Font = Enum.Font.SourceSansSemibold
-ForceBox.PlaceholderText = "10000-999999"
-ForceBox.Text = "50000"
-ForceBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-ForceBox.TextScaled = true
-ForceBox.TextSize = 20.000
-ForceBox.TextWrapped = true
-
--- Response Label
-ResponseLabel.Name = "ResponseLabel"
-ResponseLabel.Parent = Main
-ResponseLabel.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-ResponseLabel.BackgroundTransparency = 1
-ResponseLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ResponseLabel.BorderSizePixel = 0
-ResponseLabel.Position = UDim2.new(0.05, 0, 0.45, 0)
-ResponseLabel.Size = UDim2.new(0.4, 0, 0.1, 0)
-ResponseLabel.Font = Enum.Font.Nunito
-ResponseLabel.Text = "Speed:"
-ResponseLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-ResponseLabel.TextScaled = true
-ResponseLabel.TextSize = 14.000
-ResponseLabel.TextWrapped = true
-ResponseLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Response Box
-ResponseBox.Name = "ResponseBox"
-ResponseBox.Parent = Main
-ResponseBox.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-ResponseBox.BackgroundTransparency = 0.5
-ResponseBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
-ResponseBox.BorderSizePixel = 0
-ResponseBox.Position = UDim2.new(0.45, 0, 0.45, 0)
-ResponseBox.Size = UDim2.new(0.45, 0, 0.1, 0)
-ResponseBox.Font = Enum.Font.SourceSansSemibold
-ResponseBox.PlaceholderText = "1-200"
-ResponseBox.Text = "200"
-ResponseBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-ResponseBox.TextScaled = true
-ResponseBox.TextSize = 20.000
-ResponseBox.TextWrapped = true
 
 -- Button
 Button.Name = "Button"
@@ -141,31 +67,14 @@ Button.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
 Button.BackgroundTransparency = 0.5
 Button.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Button.BorderSizePixel = 0
-Button.Position = UDim2.new(0.183284417, 0, 0.58, 0)
-Button.Size = UDim2.new(0.629427791, 0, 0.15, 0)
+Button.Position = UDim2.new(0.183284417, 0, 0.656760991, 0)
+Button.Size = UDim2.new(0.629427791, 0, 0.277372271, 0)
 Button.Font = Enum.Font.Nunito
 Button.Text = "Bring | Off"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.TextScaled = true
 Button.TextSize = 28.000
 Button.TextWrapped = true
-
--- Info Label
-local InfoLabel = Instance.new("TextLabel")
-InfoLabel.Name = "InfoLabel"
-InfoLabel.Parent = Main
-InfoLabel.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
-InfoLabel.BackgroundTransparency = 1
-InfoLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-InfoLabel.BorderSizePixel = 0
-InfoLabel.Position = UDim2.new(0, 0, 0.75, 0)
-InfoLabel.Size = UDim2.new(1, 0, 0.25, 0)
-InfoLabel.Font = Enum.Font.Nunito
-InfoLabel.Text = "Force: Higher = Stronger Pull\nSpeed: Higher = Faster Response\nPress Right Ctrl to hide/show"
-InfoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-InfoLabel.TextScaled = true
-InfoLabel.TextSize = 10.000
-InfoLabel.TextWrapped = true
 
 UITextSizeConstraint_3.Parent = Button
 UITextSizeConstraint_3.MaxTextSize = 28
@@ -180,14 +89,6 @@ local Workspace = game:GetService("Workspace")
 
 local character
 local humanoidRootPart
-
--- Store references to AlignPositions for realtime updates
-local activeAlignPositions = {}
-local activeTorques = {}
-
--- Default values
-local currentMaxForce = 50000
-local currentResponsiveness = 200
 
 local mainStatus = true
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
@@ -207,160 +108,245 @@ targetPart.CanCollide = false
 targetPart.Transparency = 1
 targetPart.Size = Vector3.new(0.1, 0.1, 0.1)
 
--- Function to validate and get number from input
-local function getValidNumber(text, min, max, default)
-	local num = tonumber(text)
-	if num then
-		if min and num < min then
-			return min
-		elseif max and num > max then
-			return max
-		else
-			return num
-		end
-	end
-	return default
-end
+-- SUPER EXTREME FORCE VALUES
+local SUPER_FORCE = math.huge -- INFINITE FORCE
+local SUPER_VELOCITY = math.huge -- INFINITE VELOCITY
+local SUPER_POWER = 10^308 -- MAXIMUM FLOAT VALUE
 
--- Update all active AlignPositions when values change
-local function updateAllAlignPositions()
-	for alignPos, _ in pairs(activeAlignPositions) do
-		if alignPos and alignPos.Parent then
-			alignPos.MaxForce = currentMaxForce
-			alignPos.MaxVelocity = currentMaxForce / 100  -- Scale MaxVelocity with MaxForce
-			alignPos.Responsiveness = currentResponsiveness
-		else
-			activeAlignPositions[alignPos] = nil
-		end
-	end
-end
-
--- Force Box input handler
-ForceBox.FocusLost:Connect(function(enterPressed)
-	local newForce = getValidNumber(ForceBox.Text, 1000, 999999, 50000)
-	currentMaxForce = newForce
-	ForceBox.Text = tostring(newForce)
-	updateAllAlignPositions()
-	print("Force updated to:", newForce)
-end)
-
--- Response Box input handler
-ResponseBox.FocusLost:Connect(function(enterPressed)
-	local newResponse = getValidNumber(ResponseBox.Text, 1, 200, 200)
-	currentResponsiveness = newResponse
-	ResponseBox.Text = tostring(newResponse)
-	updateAllAlignPositions()
-	print("Responsiveness updated to:", newResponse)
-end)
-
--- Fungsi untuk memaksa part bergerak ke target (HANYA UNANCHORED PARTS)
-local function ForcePart(v)
-	-- PENGECEKAN EKSPLISIT: Hanya proses part yang TIDAK anchored
+-- Fungsi untuk INSTANT SUPER FORCE
+local function InstantSuperForce(v)
+	-- HANYA UNANCHORED PARTS
 	if v:IsA("BasePart") 
-		and v.Anchored == false  -- PENGECEKAN EKSPLISIT: Part harus unanchored
+		and not v.Anchored 
 		and not v.Parent:FindFirstChildOfClass("Humanoid")
 		and not v.Parent:FindFirstChild("Head")
 		and v.Name ~= "Handle"
 		and not v:IsDescendantOf(targetFolder)
 	then
-		-- Double check untuk memastikan part tidak anchored
-		if v.Anchored == true then
-			return -- Skip jika part anchored
-		end
-		
-		-- Clean up old movers
-		for _, x in ipairs(v:GetChildren()) do
-			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") or x:IsA("AlignPosition") or x:IsA("Torque") then
-				if activeAlignPositions[x] then
-					activeAlignPositions[x] = nil
+		-- INSTANT CLEAR ALL CONSTRAINTS
+		pcall(function()
+			for _, x in ipairs(v:GetChildren()) do
+				if x:IsA("BodyMover") or x:IsA("Constraint") then
+					x:Destroy()
 				end
-				if activeTorques[x] then
-					activeTorques[x] = nil
-				end
-				x:Destroy()
 			end
+		end)
+		
+		-- FORCE PROPERTIES
+		pcall(function()
+			v.CanCollide = false
+			v.CanTouch = false
+			v.CanQuery = false
+			v.Massless = true -- Make part massless for easier movement
+			v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0) -- Minimum physical properties
+		end)
+		
+		-- CREATE MULTIPLE ATTACHMENTS FOR MULTIPLE FORCES
+		local attachments = {}
+		for i = 1, 5 do -- 5 ATTACHMENTS FOR 5× FORCE
+			local att = Instance.new("Attachment", v)
+			att.Name = "ForceAttachment"..i
+			table.insert(attachments, att)
 		end
 		
-		v.CanCollide = false
+		-- APPLY MULTIPLE ALIGN POSITIONS (5× FORCE)
+		for i, att in ipairs(attachments) do
+			local alignPos = Instance.new("AlignPosition", v)
+			alignPos.Name = "SuperForce"..i
+			alignPos.MaxForce = SUPER_FORCE
+			alignPos.MaxVelocity = SUPER_VELOCITY
+			alignPos.Responsiveness = 200
+			alignPos.RigidityEnabled = false
+			alignPos.ApplyAtCenterOfMass = true
+			alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
+			alignPos.Attachment0 = att
+			alignPos.Position = humanoidRootPart.Position
+		end
 		
-		local alignPosition = Instance.new("AlignPosition", v)
-		local attachmentInPart = v:FindFirstChildOfClass("Attachment") or Instance.new("Attachment", v)
+		-- BODY VELOCITY WITH INFINITE FORCE
+		local bodyVel = Instance.new("BodyVelocity", v)
+		bodyVel.MaxForce = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
+		bodyVel.Velocity = Vector3.new(0, 0, 0)
 		
-		-- Use current values from UI
-		alignPosition.MaxForce = currentMaxForce
-		alignPosition.MaxVelocity = currentMaxForce / 100
-		alignPosition.Responsiveness = currentResponsiveness
-		alignPosition.Attachment0 = attachmentInPart
-		alignPosition.Attachment1 = targetAttachment
+		-- BODY POSITION WITH INFINITE FORCE
+		local bodyPos = Instance.new("BodyPosition", v)
+		bodyPos.MaxForce = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
+		bodyPos.P = SUPER_POWER
+		bodyPos.D = SUPER_POWER / 100
+		bodyPos.Position = humanoidRootPart.Position
 		
-		-- Store reference for realtime updates
-		activeAlignPositions[alignPosition] = true
+		-- ROCKET PROPULSION AS ADDITIONAL FORCE
+		pcall(function()
+			local rocket = Instance.new("RocketPropulsion", v)
+			rocket.Target = humanoidRootPart
+			rocket.MaxSpeed = SUPER_VELOCITY
+			rocket.MaxThrust = SUPER_FORCE
+			rocket.MaxTorque = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
+			rocket.ThrustP = SUPER_POWER
+			rocket.ThrustD = SUPER_POWER / 100
+			rocket:Fire()
+		end)
 		
-		local torque = Instance.new("Torque", v)
-		torque.Torque = Vector3.new(math.huge, math.huge, math.huge)
-		torque.Attachment0 = attachmentInPart
-		
-		-- Store torque reference
-		activeTorques[torque] = true
+		-- INSTANT UPDATE LOOP FOR THIS PART
+		spawn(function()
+			while v.Parent and bringActive do
+				pcall(function()
+					if humanoidRootPart then
+						local targetPos = humanoidRootPart.Position
+						
+						-- Update all AlignPositions
+						for i = 1, 5 do
+							local ap = v:FindFirstChild("SuperForce"..i)
+							if ap then
+								ap.Position = targetPos
+								ap.MaxForce = SUPER_FORCE
+								ap.MaxVelocity = SUPER_VELOCITY
+							end
+						end
+						
+						-- Update BodyPosition
+						if v:FindFirstChild("BodyPosition") then
+							v.BodyPosition.Position = targetPos
+							v.BodyPosition.MaxForce = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
+						end
+						
+						-- Update BodyVelocity with direction
+						if v:FindFirstChild("BodyVelocity") then
+							local direction = (targetPos - v.Position)
+							if direction.Magnitude > 0.1 then
+								v.BodyVelocity.Velocity = direction.Unit * 999999
+							else
+								v.BodyVelocity.Velocity = Vector3.new(0, 0, 0)
+							end
+						end
+						
+						-- TELEPORT IF TOO FAR (INSTANT BRING)
+						if (v.Position - targetPos).Magnitude > 100 then
+							v.CFrame = humanoidRootPart.CFrame
+						end
+					end
+				end)
+				RunService.Heartbeat:Wait() -- Fastest possible update
+			end
+		end)
+	end
+end
+
+-- AGGRESSIVE CONTINUOUS FORCE APPLICATION
+local function AggressiveContinuousForce()
+	-- MULTIPLE LOOPS FOR MAXIMUM FORCE
+	for loop = 1, 3 do -- 3 PARALLEL LOOPS
+		spawn(function()
+			while bringActive do
+				pcall(function()
+					for _, v in ipairs(Workspace:GetDescendants()) do
+						if v:IsA("BasePart") and not v.Anchored then
+							-- RE-APPLY IF MISSING FORCES
+							if not v:FindFirstChild("SuperForce1") then
+								task.spawn(InstantSuperForce, v)
+							end
+							
+							-- FORCE UPDATE POSITION
+							if humanoidRootPart and (v.Position - humanoidRootPart.Position).Magnitude > 50 then
+								pcall(function()
+									v.CFrame = humanoidRootPart.CFrame + Vector3.new(math.random(-5, 5), math.random(-5, 5), math.random(-5, 5))
+								end)
+							end
+						end
+					end
+				end)
+				if loop == 1 then
+					RunService.Heartbeat:Wait()
+				elseif loop == 2 then
+					task.wait(0.05)
+				else
+					task.wait(0.1)
+				end
+			end
+		end)
 	end
 end
 
 local bringActive = false
 local descendantAddedConnection
+local heartbeatConnection
 
 local function toggleBring()
 	bringActive = not bringActive
 	if bringActive then
 		Button.Text = "Bring | On"
-		Button.TextColor3 = Color3.fromRGB(0, 255, 0) -- Green when on
 		
-		-- Clear old references
-		activeAlignPositions = {}
-		activeTorques = {}
-		
-		-- Hanya proses unanchored parts
-		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("BasePart") and v.Anchored == false then  -- PENGECEKAN TAMBAHAN
-				task.spawn(ForcePart, v)
-			end
+		-- INSTANT APPLY TO ALL PARTS (MULTIPLE TIMES)
+		for iteration = 1, 3 do -- APPLY 3 TIMES FOR TRIPLE FORCE
+			spawn(function()
+				for _, v in ipairs(Workspace:GetDescendants()) do
+					task.spawn(InstantSuperForce, v)
+				end
+			end)
+			task.wait(0.01)
 		end
-
+		
+		-- MONITOR NEW PARTS
 		descendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
-			if bringActive and v:IsA("BasePart") and v.Anchored == false then  -- PENGECEKAN TAMBAHAN
-				task.spawn(ForcePart, v)
-			end
-		end)
-
-		spawn(function()
-			while bringActive and task.wait() do
-				if humanoidRootPart then
-					targetAttachment.WorldCFrame = humanoidRootPart.CFrame
+			if bringActive then
+				for i = 1, 3 do -- APPLY 3 TIMES TO NEW PARTS
+					task.spawn(InstantSuperForce, v)
 				end
 			end
 		end)
+		
+		-- START AGGRESSIVE LOOPS
+		AggressiveContinuousForce()
+		
+		-- HEARTBEAT CONNECTION FOR INSTANT UPDATES
+		heartbeatConnection = RunService.Heartbeat:Connect(function()
+			if humanoidRootPart then
+				targetPart.CFrame = humanoidRootPart.CFrame
+				targetAttachment.WorldCFrame = humanoidRootPart.CFrame
+			end
+		end)
+		
+		-- SUPER AGGRESSIVE MAIN LOOP
+		spawn(function()
+			while bringActive do
+				pcall(function()
+					-- FORCE ALL UNANCHORED PARTS EVERY FRAME
+					for _, v in ipairs(Workspace:GetDescendants()) do
+						if v:IsA("BasePart") and not v.Anchored and humanoidRootPart then
+							-- INSTANT TELEPORT IF FAR
+							if (v.Position - humanoidRootPart.Position).Magnitude > 200 then
+								v.CFrame = humanoidRootPart.CFrame
+							end
+						end
+					end
+				end)
+				RunService.Heartbeat:Wait()
+			end
+		end)
+		
 	else
 		Button.Text = "Bring | Off"
-		Button.TextColor3 = Color3.fromRGB(255, 255, 255) -- White when off
 		
+		-- DISCONNECT ALL
 		if descendantAddedConnection then
 			descendantAddedConnection:Disconnect()
-			descendantAddedConnection = nil
+		end
+		if heartbeatConnection then
+			heartbeatConnection:Disconnect()
 		end
 		
-		-- Clear references
-		activeAlignPositions = {}
-		activeTorques = {}
-		
+		-- AGGRESSIVE CLEANUP
 		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("AlignPosition") and v.Attachment1 == targetAttachment then
-				v:Destroy()
-			end
-			if v:IsA("Torque") and v.Parent and not v.Parent:FindFirstChildOfClass("Humanoid") then
-				local attachment = v.Attachment0
-				if attachment and attachment.Parent == v.Parent and v.Attachment1 == nil then
+			pcall(function()
+				if v:IsA("AlignPosition") or v:IsA("BodyVelocity") or v:IsA("BodyPosition") or v:IsA("RocketPropulsion") then
+					if v.Parent and not v.Parent:FindFirstChildOfClass("Humanoid") then
+						v:Destroy()
+					end
+				end
+				if v.Name:match("ForceAttachment") then
 					v:Destroy()
 				end
-			end
+			end)
 		end
 	end
 end
