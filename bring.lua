@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.2 - EXTREME POWER (100x)
+-- Version: 3.2 - EXTREME POWER (100x) - NO RESET - INSTANT
 
 -- Instances:
 
@@ -54,7 +54,7 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(1, 0, 0.160583943, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Bring Unanchored Parts by FayintXHub [EXTREME]"
+Label.Text = "Bring Unanchored Parts [EXTREME - INSTANT]"
 Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
@@ -105,11 +105,13 @@ Part.Anchored = true
 Part.CanCollide = false
 Part.Transparency = 1
 
+-- STORAGE UNTUK PARTS YANG SUDAH DIMODIFIKASI
+local ModifiedParts = {}
+
 if not getgenv().Network then
 	getgenv().Network = {
 		BaseParts = {},
-		-- VELOCITY 100X LEBIH KUAT
-		Velocity = Vector3.new(1446.262424, 1446.262424, 1446.262424) -- 100x dari 14.46
+		Velocity = Vector3.new(1446.262424, 1446.262424, 1446.262424)
 	}
 
 	Network.RetainPart = function(Part)
@@ -135,61 +137,69 @@ if not getgenv().Network then
 	EnablePartControl()
 end
 
--- FUNGSI FORCE PART DENGAN KEKUATAN 100X
+-- FUNGSI FORCE PART INSTANT - NO DELAY
 local function ForcePart(v)
 	if v:IsA("BasePart") 
-		and not v.Anchored  -- Hanya unanchored parts
+		and not v.Anchored
 		and not v.Parent:FindFirstChildOfClass("Humanoid") 
 		and not v.Parent:FindFirstChild("Head") 
 		and v.Name ~= "Handle" then
 		
-		-- Hapus BodyMovers yang ada
-		for _, x in ipairs(v:GetChildren()) do
-			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") then
-				x:Destroy()
+		-- CEK APAKAH PART SUDAH PERNAH DIMODIFIKASI
+		if ModifiedParts[v] then
+			local data = ModifiedParts[v]
+			if data.AlignPosition then
+				data.AlignPosition.Enabled = true
 			end
+			if data.Torque then
+				data.Torque.Enabled = true
+			end
+			return
 		end
 		
-		-- Hapus attachment/constraint lama
-		if v:FindFirstChild("Attachment") then
-			v:FindFirstChild("Attachment"):Destroy()
-		end
-		if v:FindFirstChild("AlignPosition") then
-			v:FindFirstChild("AlignPosition"):Destroy()
-		end
-		if v:FindFirstChild("Torque") then
-			v:FindFirstChild("Torque"):Destroy()
-		end
-		
+		-- INSTANT SETUP - SEMUA DIBUAT SEKALIGUS
 		v.CanCollide = false
+		v.Massless = true
+		v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
 		
-		-- TORQUE 100X LEBIH KUAT
-		local Torque = Instance.new("Torque", v)
-		Torque.Torque = Vector3.new(10000000, 10000000, 10000000) -- 100x dari 100000
+		local Torque = v:FindFirstChild("ExtremeTorque")
+		if not Torque then
+			Torque = Instance.new("Torque")
+			Torque.Name = "ExtremeTorque"
+			Torque.Torque = Vector3.new(10000000, 10000000, 10000000)
+			Torque.Parent = v
+		end
 		
-		local AlignPosition = Instance.new("AlignPosition", v)
-		local Attachment2 = Instance.new("Attachment", v)
+		local Attachment2 = v:FindFirstChild("ExtremeAttachment")
+		if not Attachment2 then
+			Attachment2 = Instance.new("Attachment")
+			Attachment2.Name = "ExtremeAttachment"
+			Attachment2.Parent = v
+		end
+		
+		local AlignPosition = v:FindFirstChild("ExtremeAlign")
+		if not AlignPosition then
+			AlignPosition = Instance.new("AlignPosition")
+			AlignPosition.Name = "ExtremeAlign"
+			AlignPosition.MaxForce = math.huge * 100
+			AlignPosition.MaxVelocity = math.huge
+			AlignPosition.Responsiveness = 20000
+			AlignPosition.ApplyAtCenterOfMass = true
+			AlignPosition.ReactionForceEnabled = false
+			AlignPosition.RigidityEnabled = true
+			AlignPosition.Attachment0 = Attachment2
+			AlignPosition.Attachment1 = Attachment1
+			AlignPosition.Parent = v
+		end
 		
 		Torque.Attachment0 = Attachment2
 		
-		-- ALIGN POSITION SETTINGS - EXTREME POWER
-		AlignPosition.MaxForce = math.huge * 100  -- Force maksimal
-		AlignPosition.MaxVelocity = math.huge  -- Velocity maksimal
-		AlignPosition.Responsiveness = 20000  -- 100x dari 200 - Respons super cepat
-		AlignPosition.ApplyAtCenterOfMass = true
-		AlignPosition.ReactionForceEnabled = false
-		AlignPosition.RigidityEnabled = true  -- Lebih rigid/kaku
-		
-		AlignPosition.Attachment0 = Attachment2
-		AlignPosition.Attachment1 = Attachment1
-		
-		-- Tambahan: Hapus massa untuk membuat lebih ringan
-		if v:IsA("BasePart") then
-			v.Massless = true
-			v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
-		end
-		
-		print("Bringing unanchored part with EXTREME POWER:", v.Name)
+		-- SIMPAN REFERENCE
+		ModifiedParts[v] = {
+			AlignPosition = AlignPosition,
+			Torque = Torque,
+			Attachment = Attachment2
+		}
 	end
 end
 
@@ -197,32 +207,42 @@ local blackHoleActive = false
 local DescendantAddedConnection
 local UpdateConnection
 
+-- INSTANT TOGGLE - NO DELAY
 local function toggleBlackHole()
 	blackHoleActive = not blackHoleActive
 	if blackHoleActive then
-		Button.Text = "Bring Parts | On [EXTREME]"
+		Button.Text = "Bring | On [INSTANT]"
 		
-		-- Scan semua parts yang ada
-		for _, v in ipairs(Workspace:GetDescendants()) do
-			ForcePart(v)
+		-- INSTANT SCAN - BATCH PROCESSING
+		local descendants = Workspace:GetDescendants()
+		for i = 1, #descendants do
+			ForcePart(descendants[i])
 		end
 
-		-- Monitor parts baru yang ditambahkan
-		DescendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
-			if blackHoleActive then
-				ForcePart(v)
-			end
-		end)
+		-- INSTANT MONITORING
+		DescendantAddedConnection = Workspace.DescendantAdded:Connect(ForcePart)
 
-		-- Update posisi target dengan Heartbeat untuk performa maksimal
+		-- INSTANT UPDATE - SETIAP FRAME
 		UpdateConnection = RunService.Heartbeat:Connect(function()
-			if blackHoleActive and humanoidRootPart then
-				Attachment1.WorldCFrame = humanoidRootPart.CFrame
-				Part.CFrame = humanoidRootPart.CFrame
+			if humanoidRootPart then
+				local cf = humanoidRootPart.CFrame
+				Attachment1.WorldCFrame = cf
+				Part.CFrame = cf
 			end
 		end)
 	else
-		Button.Text = "Bring Parts | Off"
+		Button.Text = "Bring | Off"
+		
+		-- INSTANT DISABLE - NO LOOP DELAY
+		for part, data in pairs(ModifiedParts) do
+			if data.AlignPosition then
+				data.AlignPosition.Enabled = false
+			end
+			if data.Torque then
+				data.Torque.Enabled = false
+			end
+		end
+		
 		if DescendantAddedConnection then
 			DescendantAddedConnection:Disconnect()
 		end
@@ -232,13 +252,13 @@ local function toggleBlackHole()
 	end
 end
 
+-- INSTANT PLAYER SEARCH - NO WAIT
 local function getPlayer(name)
 	local lowerName = string.lower(name)
-	for _, p in pairs(Players:GetPlayers()) do
-		local lowerPlayer = string.lower(p.Name)
-		if string.find(lowerPlayer, lowerName) then
-			return p
-		elseif string.find(string.lower(p.DisplayName), lowerName) then
+	local players = Players:GetPlayers()
+	for i = 1, #players do
+		local p = players[i]
+		if string.find(string.lower(p.Name), lowerName) or string.find(string.lower(p.DisplayName), lowerName) then
 			return p
 		end
 	end
@@ -246,6 +266,7 @@ end
 
 local player = nil
 
+-- INSTANT PLAYER SELECTION
 local function VDOYZQL_fake_script()
 	local script = Instance.new('Script', Box)
 
@@ -254,26 +275,46 @@ local function VDOYZQL_fake_script()
 			player = getPlayer(Box.Text)
 			if player then
 				Box.Text = player.Name
-				print("Player found:", player.Name)
-			else
-				print("Player not found")
 			end
 		end
 	end)
 end
 coroutine.wrap(VDOYZQL_fake_script)()
 
+-- INSTANT ACTIVATION
 local function JUBNQKI_fake_script()
 	local script = Instance.new('Script', Button)
 
 	script.Parent.MouseButton1Click:Connect(function()
 		if player then
-			character = player.Character or player.CharacterAdded:Wait()
-			humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-			toggleBlackHole()
-		else
-			print("Player is not selected")
+			-- INSTANT CHARACTER GET - NO WAIT
+			character = player.Character
+			if character then
+				humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+				if humanoidRootPart then
+					toggleBlackHole()
+				end
+			else
+				-- AUTO-CONNECT KETIKA CHARACTER MUNCUL
+				local conn
+				conn = player.CharacterAdded:Connect(function(char)
+					character = char
+					humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+					if humanoidRootPart and not blackHoleActive then
+						toggleBlackHole()
+					end
+					conn:Disconnect()
+				end)
+			end
 		end
 	end)
 end
 coroutine.wrap(JUBNQKI_fake_script)()
+
+-- AUTO-UPDATE HUMANOIDROOTPART SETIAP FRAME (NO DELAY)
+RunService.Heartbeat:Connect(function()
+	if player and player.Character and not humanoidRootPart then
+		character = player.Character
+		humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	end
+end)
