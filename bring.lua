@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.2 MASSIVE EDITION
+-- Version: 3.2 - REAL BRING (NO ADMIN REQUIRED)
 
 -- Instances:
 
@@ -54,8 +54,8 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(1, 0, 0.160583943, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "MASSIVE Bring Parts - FayintXHub"
-Label.TextColor3 = Color3.fromRGB(255, 0, 0)
+Label.Text = "Bring Parts by FayintXHub"
+Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
 Label.TextWrapped = true
@@ -70,7 +70,7 @@ Button.BorderSizePixel = 0
 Button.Position = UDim2.new(0.183284417, 0, 0.656760991, 0)
 Button.Size = UDim2.new(0.629427791, 0, 0.277372271, 0)
 Button.Font = Enum.Font.Nunito
-Button.Text = "MASSIVE | OFF"
+Button.Text = "Bring | Off"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.TextScaled = true
 Button.TextSize = 28.000
@@ -98,202 +98,141 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 	end
 end)
 
--- Multiple target parts untuk tarikan masif
-local targetFolder = Instance.new("Folder", Workspace)
-targetFolder.Name = "MassiveBringTarget_FayintX"
-
--- Membuat multiple anchor points untuk tarikan yang lebih kuat
-local targetParts = {}
-local targetAttachments = {}
-
-for i = 1, 10 do -- 10 anchor points untuk tarikan super masif
-	local targetPart = Instance.new("Part", targetFolder)
-	local targetAttachment = Instance.new("Attachment", targetPart)
-	targetPart.Anchored = true
-	targetPart.CanCollide = false
-	targetPart.Transparency = 1
-	targetPart.Size = Vector3.new(0.01, 0.01, 0.01)
-	targetPart.Name = "MassiveAnchor" .. i
-	
-	table.insert(targetParts, targetPart)
-	table.insert(targetAttachments, targetAttachment)
-end
-
--- Fungsi untuk memaksa part bergerak ke target dengan kekuatan MASIF
+-- REAL BRING WITHOUT ADMIN - Menggunakan Network Ownership
 local function ForcePart(v)
 	if v:IsA("BasePart") 
 		and not v.Anchored
 		and not v.Parent:FindFirstChildOfClass("Humanoid")
 		and not v.Parent:FindFirstChild("Head")
 		and v.Name ~= "Handle"
-		and not v:IsDescendantOf(targetFolder)
 	then
-		-- Hapus semua physics constraint yang ada
-		for _, x in ipairs(v:GetChildren()) do
-			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") or x:IsA("AlignPosition") or x:IsA("Torque") or x:IsA("BodyVelocity") or x:IsA("BodyPosition") then
-				x:Destroy()
+		-- CEK apakah part bisa di-claim ownership
+		local canOwn = pcall(function()
+			if v:CanSetNetworkOwnership() then
+				-- CLAIM NETWORK OWNERSHIP ke LocalPlayer
+				v:SetNetworkOwnership(LocalPlayer)
 			end
-		end
+		end)
 		
-		-- Nonaktifkan semua collision
-		v.CanCollide = false
-		v.CanTouch = false
-		v.CanQuery = false
-		
-		-- Set properties untuk tarikan maksimal
-		if v:IsA("Part") then
-			v.CustomPhysicalProperties = PhysicalProperties.new(
-				0.01, -- Density super ringan
-				0, -- Friction nol
-				0, -- Elasticity nol
-				1, -- ElasticityWeight
-				1  -- FrictionWeight
-			)
-		end
-		
-		-- Buat multiple AlignPosition untuk tarikan MASIF
-		for i = 1, math.min(3, #targetAttachments) do -- 3 AlignPosition per part
-			local alignPosition = Instance.new("AlignPosition", v)
-			local attachmentInPart = Instance.new("Attachment", v)
-			attachmentInPart.Name = "MassiveAttachment" .. i
+		if canOwn then
+			-- Hapus semua constraint lama
+			for _, x in ipairs(v:GetChildren()) do
+				if x:IsA("BodyMover") or x:IsA("BodyPosition") or x:IsA("BodyVelocity") or x:IsA("BodyGyro") or x:IsA("AlignPosition") or x:IsA("Torque") then
+					x:Destroy()
+				end
+			end
 			
-			-- KONFIGURASI MASIF
-			alignPosition.MaxForce = math.huge
-			alignPosition.MaxVelocity = math.huge
-			alignPosition.Responsiveness = 200 -- Maksimal responsiveness
-			alignPosition.RigidityEnabled = true -- Enable rigidity untuk tarikan instant
-			alignPosition.ApplyAtCenterOfMass = true
-			alignPosition.Mode = Enum.PositionAlignmentMode.OneAttachment
-			alignPosition.Attachment0 = attachmentInPart
-			alignPosition.Attachment1 = targetAttachments[i]
+			v.CanCollide = false
+			v.Massless = true
+			
+			-- BODYVELOCITY - Lebih smooth dan ter-replikasi dengan network ownership
+			local bodyVelocity = Instance.new("BodyVelocity")
+			bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+			bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+			bodyVelocity.P = 1250
+			bodyVelocity.Parent = v
+			
+			-- BODYGYRO - Stabilitas rotasi
+			local bodyGyro = Instance.new("BodyGyro")
+			bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+			bodyGyro.P = 10000
+			bodyGyro.D = 500
+			bodyGyro.CFrame = v.CFrame
+			bodyGyro.Parent = v
+			
+			-- Tag untuk tracking
+			v:SetAttribute("FayintXBring", true)
 		end
-		
-		-- BodyVelocity untuk boost kecepatan
-		local bodyVelocity = Instance.new("BodyVelocity", v)
-		bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-		bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-		
-		-- BodyPosition sebagai backup
-		local bodyPosition = Instance.new("BodyPosition", v)
-		bodyPosition.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-		bodyPosition.D = 10000 -- Damping super tinggi
-		bodyPosition.P = 1000000 -- Power super tinggi
-		
-		-- Anti-rotation dengan Torque masif
-		local torque = Instance.new("Torque", v)
-		torque.Torque = Vector3.new(math.huge, math.huge, math.huge)
-		torque.Attachment0 = v:FindFirstChildOfClass("Attachment")
-		
-		-- BodyAngularVelocity untuk stop rotasi
-		local bodyAngularVelocity = Instance.new("BodyAngularVelocity", v)
-		bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-		bodyAngularVelocity.AngularVelocity = Vector3.new(0, 0, 0)
 	end
 end
 
 local bringActive = false
 local descendantAddedConnection
-local heartbeatConnection
+local updateConnection
 
 local function toggleBring()
 	bringActive = not bringActive
 	if bringActive then
-		Button.Text = "MASSIVE | ON"
-		Button.TextColor3 = Color3.fromRGB(0, 255, 0)
+		Button.Text = "Bring | On"
 		
-		-- Process semua parts yang ada
+		-- Apply ke semua parts yang bisa di-own
 		for _, v in ipairs(Workspace:GetDescendants()) do
 			task.spawn(ForcePart, v)
 		end
 
-		-- Auto-process parts baru
+		-- Monitor parts baru
 		descendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
 			if bringActive then
+				task.wait(0.1) -- Wait for part to load
 				task.spawn(ForcePart, v)
 			end
 		end)
 
-		-- Update posisi target dengan multiple threads
-		spawn(function()
-			while bringActive and task.wait() do
-				if humanoidRootPart then
-					local cf = humanoidRootPart.CFrame
-					
-					-- Update semua anchor points
-					for i, attachment in ipairs(targetAttachments) do
-						local offset = CFrame.new(
-							math.sin(i * math.pi / 5) * 0.1,
-							math.cos(i * math.pi / 5) * 0.1,
-							0
-						)
-						attachment.WorldCFrame = cf * offset
-					end
-					
-					-- Update BodyPosition & BodyVelocity untuk semua parts
-					for _, v in ipairs(Workspace:GetDescendants()) do
-						if v:IsA("BodyPosition") then
-							v.Position = cf.Position
-						elseif v:IsA("BodyVelocity") then
-							local part = v.Parent
-							if part and part:IsA("BasePart") then
-								local direction = (cf.Position - part.Position).Unit
-								v.Velocity = direction * 10000 -- Kecepatan masif
-							end
-						end
-					end
-				end
-			end
-		end)
-		
-		-- Extra heartbeat connection untuk update super cepat
-		heartbeatConnection = RunService.Heartbeat:Connect(function()
-			if bringActive and humanoidRootPart then
-				local cf = humanoidRootPart.CFrame
+		-- UPDATE LOOP menggunakan BodyVelocity untuk smooth movement
+		updateConnection = RunService.Heartbeat:Connect(function(deltaTime)
+			if humanoidRootPart and bringActive then
+				local targetPos = humanoidRootPart.Position
 				
-				-- Force update posisi parts yang jauh
 				for _, v in ipairs(Workspace:GetDescendants()) do
-					if v:IsA("BasePart") and not v.Anchored and not v:IsDescendantOf(targetFolder) then
-						local distance = (v.Position - cf.Position).Magnitude
-						
-						-- Teleport parts yang terlalu jauh
-						if distance > 100 then
-							v.CFrame = cf + Vector3.new(
-								math.random(-5, 5),
-								math.random(0, 10),
-								math.random(-5, 5)
-							)
+					if v:IsA("BasePart") and v:GetAttribute("FayintXBring") then
+						local bodyVel = v:FindFirstChildOfClass("BodyVelocity")
+						if bodyVel and v.Parent then
+							-- Hitung direction dan distance
+							local direction = (targetPos - v.Position)
+							local distance = direction.Magnitude
+							
+							if distance > 0.5 then
+								-- Velocity berdasarkan jarak (semakin jauh semakin cepat)
+								local speed = math.clamp(distance * 10, 50, 500)
+								bodyVel.Velocity = direction.Unit * speed
+							else
+								-- Jika sudah dekat, perlambat
+								bodyVel.Velocity = direction * 20
+							end
+							
+							-- Update ownership terus menerus
+							pcall(function()
+								if v:CanSetNetworkOwnership() then
+									v:SetNetworkOwnership(LocalPlayer)
+								end
+							end)
 						end
 					end
 				end
 			end
 		end)
-		
 	else
-		Button.Text = "MASSIVE | OFF"
-		Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Button.Text = "Bring | Off"
 		
+		-- Disconnect semua connections
 		if descendantAddedConnection then
 			descendantAddedConnection:Disconnect()
 			descendantAddedConnection = nil
 		end
 		
-		if heartbeatConnection then
-			heartbeatConnection:Disconnect()
-			heartbeatConnection = nil
+		if updateConnection then
+			updateConnection:Disconnect()
+			updateConnection = nil
 		end
 		
-		-- Cleanup semua physics objects
+		-- Cleanup
 		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("AlignPosition") or v:IsA("Torque") or v:IsA("BodyVelocity") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") then
-				local parent = v.Parent
-				if parent and not parent:FindFirstChildOfClass("Humanoid") then
-					v:Destroy()
+			if v:IsA("BasePart") and v:GetAttribute("FayintXBring") then
+				v:SetAttribute("FayintXBring", nil)
+				
+				-- Hapus BodyMovers
+				for _, x in ipairs(v:GetChildren()) do
+					if x:IsA("BodyVelocity") or x:IsA("BodyGyro") or x:IsA("BodyPosition") then
+						x:Destroy()
+					end
 				end
-			end
-			
-			-- Cleanup attachments
-			if v:IsA("Attachment") and v.Name:match("MassiveAttachment") then
-				v:Destroy()
+				
+				-- Release network ownership
+				pcall(function()
+					if v:CanSetNetworkOwnership() then
+						v:SetNetworkOwnershipAuto()
+					end
+				end)
 			end
 		end
 	end
@@ -318,7 +257,7 @@ Box.FocusLost:Connect(function(enterPressed)
 		player = getPlayer(Box.Text)
 		if player then
 			Box.Text = player.Name
-			print("MASSIVE TARGET SET:", player.Name)
+			print("Player target set to:", player.Name)
 		else
 			print("Player not found")
 		end
@@ -331,6 +270,6 @@ Button.MouseButton1Click:Connect(function()
 		humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 		toggleBring()
 	else
-		print("SELECT TARGET FIRST!")
+		print("Player target is not selected")
 	end
 end)
