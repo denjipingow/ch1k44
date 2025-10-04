@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.2
+-- Version: 3.2 - Ultra Power Edition
 
 -- Instances:
 
@@ -98,229 +98,200 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 	end
 end)
 
--- Part target untuk menarik objek
-local targetFolder = Instance.new("Folder", Workspace)
-targetFolder.Name = "BringPartTarget_FayintX"
-local targetPart = Instance.new("Part", targetFolder)
-local targetAttachment = Instance.new("Attachment", targetPart)
-targetPart.Anchored = true
-targetPart.CanCollide = false
-targetPart.Transparency = 1
-targetPart.Size = Vector3.new(0.1, 0.1, 0.1)
+-- ULTRA EXTREME FORCE VALUES (100× LIPAT)
+local ULTRA_FORCE = 5000000 -- 100× dari 50,000
+local ULTRA_VELOCITY = 50000 -- 100× dari 500
+local ULTRA_POWER = 5000000
+local ULTRA_RANGE = 200000 -- 1000× dari 200 (200,000 studs)
+local TELEPORT_THRESHOLD = 15000 -- 1000× dari 15
 
--- SUPER EXTREME FORCE VALUES
-local SUPER_FORCE = math.huge -- INFINITE FORCE
-local SUPER_VELOCITY = math.huge -- INFINITE VELOCITY
-local SUPER_POWER = 10^308 -- MAXIMUM FLOAT VALUE
-
--- Fungsi untuk INSTANT SUPER FORCE
-local function InstantSuperForce(v)
-	-- HANYA UNANCHORED PARTS
-	if v:IsA("BasePart") 
-		and not v.Anchored 
-		and not v.Parent:FindFirstChildOfClass("Humanoid")
-		and not v.Parent:FindFirstChild("Head")
-		and v.Name ~= "Handle"
-		and not v:IsDescendantOf(targetFolder)
-	then
-		-- INSTANT CLEAR ALL CONSTRAINTS
-		pcall(function()
-			for _, x in ipairs(v:GetChildren()) do
-				if x:IsA("BodyMover") or x:IsA("Constraint") then
-					x:Destroy()
-				end
+-- Fungsi untuk apply ULTRA FORCE ke part (TIDAK VISUAL, REAL PHYSICS)
+local function applyUltraForce(v)
+	if not v:IsA("BasePart") then return end
+	if v.Anchored then return end
+	if v.Parent:FindFirstChildOfClass("Humanoid") then return end
+	if v.Parent:FindFirstChild("Head") then return end
+	if v.Name == "Handle" then return end
+	
+	-- Clear existing constraints
+	pcall(function()
+		for _, x in ipairs(v:GetChildren()) do
+			if x:IsA("BodyMover") or x:IsA("Constraint") then
+				x:Destroy()
 			end
-		end)
-		
-		-- FORCE PROPERTIES
-		pcall(function()
-			v.CanCollide = false
-			v.CanTouch = false
-			v.CanQuery = false
-			v.Massless = true -- Make part massless for easier movement
-			v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0) -- Minimum physical properties
-		end)
-		
-		-- CREATE MULTIPLE ATTACHMENTS FOR MULTIPLE FORCES
-		local attachments = {}
-		for i = 1, 5 do -- 5 ATTACHMENTS FOR 5× FORCE
-			local att = Instance.new("Attachment", v)
-			att.Name = "ForceAttachment"..i
-			table.insert(attachments, att)
 		end
-		
-		-- APPLY MULTIPLE ALIGN POSITIONS (5× FORCE)
-		for i, att in ipairs(attachments) do
-			local alignPos = Instance.new("AlignPosition", v)
-			alignPos.Name = "SuperForce"..i
-			alignPos.MaxForce = SUPER_FORCE
-			alignPos.MaxVelocity = SUPER_VELOCITY
-			alignPos.Responsiveness = 200
-			alignPos.RigidityEnabled = false
-			alignPos.ApplyAtCenterOfMass = true
-			alignPos.Mode = Enum.PositionAlignmentMode.OneAttachment
-			alignPos.Attachment0 = att
-			alignPos.Position = humanoidRootPart.Position
-		end
-		
-		-- BODY VELOCITY WITH INFINITE FORCE
-		local bodyVel = Instance.new("BodyVelocity", v)
-		bodyVel.MaxForce = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
-		bodyVel.Velocity = Vector3.new(0, 0, 0)
-		
-		-- BODY POSITION WITH INFINITE FORCE
-		local bodyPos = Instance.new("BodyPosition", v)
-		bodyPos.MaxForce = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
-		bodyPos.P = SUPER_POWER
-		bodyPos.D = SUPER_POWER / 100
-		bodyPos.Position = humanoidRootPart.Position
-		
-		-- ROCKET PROPULSION AS ADDITIONAL FORCE
-		pcall(function()
-			local rocket = Instance.new("RocketPropulsion", v)
-			rocket.Target = humanoidRootPart
-			rocket.MaxSpeed = SUPER_VELOCITY
-			rocket.MaxThrust = SUPER_FORCE
-			rocket.MaxTorque = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
-			rocket.ThrustP = SUPER_POWER
-			rocket.ThrustD = SUPER_POWER / 100
-			rocket:Fire()
-		end)
-		
-		-- INSTANT UPDATE LOOP FOR THIS PART
-		spawn(function()
-			while v.Parent and bringActive do
-				pcall(function()
-					if humanoidRootPart then
-						local targetPos = humanoidRootPart.Position
-						
-						-- Update all AlignPositions
-						for i = 1, 5 do
-							local ap = v:FindFirstChild("SuperForce"..i)
-							if ap then
-								ap.Position = targetPos
-								ap.MaxForce = SUPER_FORCE
-								ap.MaxVelocity = SUPER_VELOCITY
-							end
-						end
-						
-						-- Update BodyPosition
-						if v:FindFirstChild("BodyPosition") then
-							v.BodyPosition.Position = targetPos
-							v.BodyPosition.MaxForce = Vector3.new(SUPER_FORCE, SUPER_FORCE, SUPER_FORCE)
-						end
-						
-						-- Update BodyVelocity with direction
-						if v:FindFirstChild("BodyVelocity") then
-							local direction = (targetPos - v.Position)
-							if direction.Magnitude > 0.1 then
-								v.BodyVelocity.Velocity = direction.Unit * 999999
-							else
-								v.BodyVelocity.Velocity = Vector3.new(0, 0, 0)
-							end
-						end
-						
-						-- TELEPORT IF TOO FAR (INSTANT BRING)
-						if (v.Position - targetPos).Magnitude > 100 then
-							v.CFrame = humanoidRootPart.CFrame
-						end
-					end
-				end)
-				RunService.Heartbeat:Wait() -- Fastest possible update
-			end
-		end)
-	end
-end
-
--- AGGRESSIVE CONTINUOUS FORCE APPLICATION
-local function AggressiveContinuousForce()
-	-- MULTIPLE LOOPS FOR MAXIMUM FORCE
-	for loop = 1, 3 do -- 3 PARALLEL LOOPS
-		spawn(function()
-			while bringActive do
-				pcall(function()
-					for _, v in ipairs(Workspace:GetDescendants()) do
-						if v:IsA("BasePart") and not v.Anchored then
-							-- RE-APPLY IF MISSING FORCES
-							if not v:FindFirstChild("SuperForce1") then
-								task.spawn(InstantSuperForce, v)
-							end
-							
-							-- FORCE UPDATE POSITION
-							if humanoidRootPart and (v.Position - humanoidRootPart.Position).Magnitude > 50 then
-								pcall(function()
-									v.CFrame = humanoidRootPart.CFrame + Vector3.new(math.random(-5, 5), math.random(-5, 5), math.random(-5, 5))
-								end)
-							end
-						end
-					end
-				end)
-				if loop == 1 then
-					RunService.Heartbeat:Wait()
-				elseif loop == 2 then
-					task.wait(0.05)
-				else
-					task.wait(0.1)
-				end
-			end
-		end)
-	end
+	end)
+	
+	-- Set physical properties untuk REAL movement
+	pcall(function()
+		v.CanCollide = false
+		v.CanTouch = false
+		v.CanQuery = false
+		v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0.1, 0, 0.5, 0.5)
+	end)
+	
+	-- ULTRA BODY VELOCITY (REAL FORCE)
+	local bodyVel = Instance.new("BodyVelocity")
+	bodyVel.Name = "UltraBringVelocity"
+	bodyVel.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
+	bodyVel.Velocity = Vector3.new(0, 0, 0)
+	bodyVel.Parent = v
+	
+	-- ULTRA BODY POSITION (REAL FORCE)
+	local bodyPos = Instance.new("BodyPosition")
+	bodyPos.Name = "UltraBringPosition"
+	bodyPos.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
+	bodyPos.P = ULTRA_POWER
+	bodyPos.D = ULTRA_POWER / 50
+	bodyPos.Position = humanoidRootPart.Position
+	bodyPos.Parent = v
+	
+	-- ADDITIONAL BODY GYRO untuk stability
+	local bodyGyro = Instance.new("BodyGyro")
+	bodyGyro.Name = "UltraBringGyro"
+	bodyGyro.MaxTorque = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
+	bodyGyro.P = ULTRA_POWER / 10
+	bodyGyro.D = ULTRA_POWER / 100
+	bodyGyro.Parent = v
 end
 
 local bringActive = false
 local descendantAddedConnection
-local heartbeatConnection
+local updateConnections = {}
+
+-- ULTRA AGGRESSIVE FORCE LOOP (REAL PHYSICS)
+local function ultraForceLoop()
+	-- Multi-threaded ultra force application
+	for threadId = 1, 5 do
+		local updateConnection = RunService.Heartbeat:Connect(function()
+			if not bringActive then return end
+			if not humanoidRootPart or not humanoidRootPart.Parent then return end
+			
+			pcall(function()
+				local targetPos = humanoidRootPart.Position
+				local partsProcessed = 0
+				
+				for _, v in ipairs(Workspace:GetDescendants()) do
+					if v:IsA("BasePart") and not v.Anchored then
+						-- Cek jarak dalam ULTRA RANGE
+						local distance = (v.Position - targetPos).Magnitude
+						
+						if distance <= ULTRA_RANGE then
+							partsProcessed = partsProcessed + 1
+							
+							-- Apply force jika belum ada
+							local bodyPos = v:FindFirstChild("UltraBringPosition")
+							local bodyVel = v:FindFirstChild("UltraBringVelocity")
+							local bodyGyro = v:FindFirstChild("UltraBringGyro")
+							
+							if not bodyPos or not bodyVel or not bodyGyro then
+								task.spawn(applyUltraForce, v)
+							else
+								-- Update REAL forces
+								bodyPos.Position = targetPos
+								bodyPos.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
+								
+								-- Calculate velocity dengan ULTRA SPEED
+								local direction = (targetPos - v.Position)
+								if direction.Magnitude > 1 then
+									local speed = math.min(direction.Magnitude * 10, ULTRA_VELOCITY)
+									bodyVel.Velocity = direction.Unit * speed
+									bodyVel.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
+								else
+									bodyVel.Velocity = Vector3.new(0, 0, 0)
+								end
+								
+								-- Update gyro untuk stabilitas
+								bodyGyro.CFrame = humanoidRootPart.CFrame
+							end
+							
+							-- INSTANT TELEPORT jika terlalu jauh (REAL PULL)
+							if distance > TELEPORT_THRESHOLD then
+								v.CFrame = CFrame.new(targetPos + Vector3.new(
+									math.random(-20, 20),
+									math.random(-20, 20),
+									math.random(-20, 20)
+								))
+								v.Velocity = Vector3.new(0, 0, 0)
+								v.RotVelocity = Vector3.new(0, 0, 0)
+							end
+						end
+					end
+					
+					-- Limit per frame untuk performance
+					if partsProcessed >= 50 then
+						break
+					end
+				end
+			end)
+		end)
+		
+		table.insert(updateConnections, updateConnection)
+	end
+end
 
 local function toggleBring()
 	bringActive = not bringActive
 	if bringActive then
 		Button.Text = "Bring | On"
 		
-		-- INSTANT APPLY TO ALL PARTS (MULTIPLE TIMES)
-		for iteration = 1, 3 do -- APPLY 3 TIMES FOR TRIPLE FORCE
-			spawn(function()
+		-- INSTANT APPLY TO ALL PARTS IN RANGE (MULTIPLE PASSES)
+		for pass = 1, 3 do
+			task.spawn(function()
 				for _, v in ipairs(Workspace:GetDescendants()) do
-					task.spawn(InstantSuperForce, v)
+					if v:IsA("BasePart") and not v.Anchored and humanoidRootPart then
+						local distance = (v.Position - humanoidRootPart.Position).Magnitude
+						if distance <= ULTRA_RANGE then
+							task.spawn(applyUltraForce, v)
+						end
+					end
 				end
 			end)
-			task.wait(0.01)
+			task.wait(0.05)
 		end
 		
-		-- MONITOR NEW PARTS
+		-- MONITOR NEW PARTS (ULTRA AGGRESSIVE)
 		descendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
-			if bringActive then
-				for i = 1, 3 do -- APPLY 3 TIMES TO NEW PARTS
-					task.spawn(InstantSuperForce, v)
+			if bringActive and v:IsA("BasePart") and humanoidRootPart then
+				task.wait(0.05)
+				local distance = (v.Position - humanoidRootPart.Position).Magnitude
+				if distance <= ULTRA_RANGE then
+					for i = 1, 2 do
+						task.spawn(applyUltraForce, v)
+					end
 				end
 			end
 		end)
 		
-		-- START AGGRESSIVE LOOPS
-		AggressiveContinuousForce()
+		-- START ULTRA FORCE LOOPS
+		ultraForceLoop()
 		
-		-- HEARTBEAT CONNECTION FOR INSTANT UPDATES
-		heartbeatConnection = RunService.Heartbeat:Connect(function()
-			if humanoidRootPart then
-				targetPart.CFrame = humanoidRootPart.CFrame
-				targetAttachment.WorldCFrame = humanoidRootPart.CFrame
-			end
-		end)
-		
-		-- SUPER AGGRESSIVE MAIN LOOP
-		spawn(function()
+		-- ADDITIONAL TELEPORT LOOP untuk parts yang sangat jauh
+		task.spawn(function()
 			while bringActive do
 				pcall(function()
-					-- FORCE ALL UNANCHORED PARTS EVERY FRAME
-					for _, v in ipairs(Workspace:GetDescendants()) do
-						if v:IsA("BasePart") and not v.Anchored and humanoidRootPart then
-							-- INSTANT TELEPORT IF FAR
-							if (v.Position - humanoidRootPart.Position).Magnitude > 200 then
-								v.CFrame = humanoidRootPart.CFrame
+					if humanoidRootPart then
+						local targetPos = humanoidRootPart.Position
+						for _, v in ipairs(Workspace:GetDescendants()) do
+							if v:IsA("BasePart") and not v.Anchored then
+								local distance = (v.Position - targetPos).Magnitude
+								if distance > TELEPORT_THRESHOLD and distance <= ULTRA_RANGE then
+									if v:FindFirstChild("UltraBringPosition") then
+										-- FORCE TELEPORT untuk instant bring
+										v.CFrame = CFrame.new(targetPos + Vector3.new(
+											math.random(-15, 15),
+											math.random(-15, 15),
+											math.random(-15, 15)
+										))
+										v.Velocity = Vector3.new(0, 0, 0)
+										v.RotVelocity = Vector3.new(0, 0, 0)
+									end
+								end
 							end
 						end
 					end
 				end)
-				RunService.Heartbeat:Wait()
+				task.wait(0.1)
 			end
 		end)
 		
@@ -331,19 +302,16 @@ local function toggleBring()
 		if descendantAddedConnection then
 			descendantAddedConnection:Disconnect()
 		end
-		if heartbeatConnection then
-			heartbeatConnection:Disconnect()
-		end
 		
-		-- AGGRESSIVE CLEANUP
+		for _, connection in ipairs(updateConnections) do
+			connection:Disconnect()
+		end
+		updateConnections = {}
+		
+		-- AGGRESSIVE CLEANUP (REAL REMOVAL)
 		for _, v in ipairs(Workspace:GetDescendants()) do
 			pcall(function()
-				if v:IsA("AlignPosition") or v:IsA("BodyVelocity") or v:IsA("BodyPosition") or v:IsA("RocketPropulsion") then
-					if v.Parent and not v.Parent:FindFirstChildOfClass("Humanoid") then
-						v:Destroy()
-					end
-				end
-				if v.Name:match("ForceAttachment") then
+				if v.Name == "UltraBringVelocity" or v.Name == "UltraBringPosition" or v.Name == "UltraBringGyro" then
 					v:Destroy()
 				end
 			end)
