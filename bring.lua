@@ -1,12 +1,16 @@
 -- Gui to Lua
--- Version: 3.2 - REAL BRING (NOT VISUAL ONLY)
+-- Version: 3.2
 
 -- Instances:
 
 local Gui = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
+local Box = Instance.new("TextBox")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
 local Label = Instance.new("TextLabel")
+local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
 local Button = Instance.new("TextButton")
+local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
 
 --Properties:
 
@@ -24,28 +28,47 @@ Main.Size = UDim2.new(0.240350261, 0, 0.166880623, 0)
 Main.Active = true
 Main.Draggable = true
 
+-- Box
+Box.Name = "Box"
+Box.Parent = Main
+Box.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
+Box.BackgroundTransparency = 0.5
+Box.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Box.BorderSizePixel = 0
+Box.Position = UDim2.new(0.0980926454, 0, 0.218712583, 0)
+Box.Size = UDim2.new(0.801089942, 0, 0.364963502, 0)
+Box.FontFace = Font.new("rbxasset://fonts/families/SourceSansSemibold.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+Box.PlaceholderText = "Player here"
+Box.Text = ""
+Box.TextColor3 = Color3.fromRGB(255, 255, 255)
+Box.TextScaled = true
+Box.TextSize = 31.000
+Box.TextWrapped = true
+
+-- Label
 Label.Name = "Label"
 Label.Parent = Main
 Label.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
 Label.BackgroundTransparency = 0.5
 Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
-Label.Size = UDim2.new(1, 0, 0.35, 0)
+Label.Size = UDim2.new(1, 0, 0.160583943, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Real Bring - Server Replicated"
+Label.Text = "Bring Parts by FayintXHub"
 Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
 Label.TextWrapped = true
 
+-- Button
 Button.Name = "Button"
 Button.Parent = Main
 Button.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
 Button.BackgroundTransparency = 0.5
 Button.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Button.BorderSizePixel = 0
-Button.Position = UDim2.new(0.183284417, 0, 0.5, 0)
-Button.Size = UDim2.new(0.629427791, 0, 0.4, 0)
+Button.Position = UDim2.new(0.183284417, 0, 0.656760991, 0)
+Button.Size = UDim2.new(0.629427791, 0, 0.277372271, 0)
 Button.Font = Enum.Font.Nunito
 Button.Text = "Bring | Off"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -53,340 +76,189 @@ Button.TextScaled = true
 Button.TextSize = 28.000
 Button.TextWrapped = true
 
+UITextSizeConstraint_3.Parent = Button
+UITextSizeConstraint_3.MaxTextSize = 28
+
 -- Scripts:
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
--- Toggle GUI
-game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessedEvent)
+local character
+local humanoidRootPart
+
+mainStatus = true
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 	if input.KeyCode == Enum.KeyCode.RightControl and not gameProcessedEvent then
-		Main.Visible = not Main.Visible
+		mainStatus = not mainStatus
+		Main.Visible = mainStatus
 	end
 end)
 
--- Advanced Network Control
-local function SetupNetworkOwnership()
-	settings().Physics.AllowSleep = false
-	settings().Physics.PhysicsEnvironmentalThrottle = Enum.EnviromentalPhysicsThrottle.Disabled
-	
-	LocalPlayer.MaximumSimulationRadius = math.pow(math.huge, math.huge)
-	sethiddenproperty(LocalPlayer, "SimulationRadius", math.pow(math.huge, math.huge))
-	
-	RunService.Heartbeat:Connect(function()
-		sethiddenproperty(LocalPlayer, "SimulationRadius", math.pow(math.huge, math.huge))
+local Folder = Instance.new("Folder", Workspace)
+local Part = Instance.new("Part", Folder)
+local Attachment1 = Instance.new("Attachment", Part)
+Part.Anchored = true
+Part.CanCollide = false
+Part.Transparency = 1
+
+if not getgenv().Network then
+	getgenv().Network = {
+		BaseParts = {},
+		-- UPDATED: Velocity sangat tinggi
+		Velocity = Vector3.new(999999, 999999, 999999)
+	}
+
+	Network.RetainPart = function(Part)
+		if Part:IsA("BasePart") and not Part.Anchored and Part:IsDescendantOf(Workspace) then
+			table.insert(Network.BaseParts, Part)
+			Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+			Part.CanCollide = false
+		end
+	end
+
+	local function EnablePartControl()
 		LocalPlayer.ReplicationFocus = Workspace
-	end)
-end
-
-SetupNetworkOwnership()
-
--- Aggressive Network Ownership Stealer
-local function StealNetworkOwnership(part)
-	if not part:IsA("BasePart") then return end
-	
-	-- Method 1: Direct ownership claim
-	pcall(function()
-		part:SetNetworkOwner(nil)
-	end)
-	
-	pcall(function()
-		part:SetNetworkOwner(LocalPlayer)
-	end)
-	
-	-- Method 2: Velocity manipulation
-	pcall(function()
-		part.Velocity = Vector3.new(0, 0, 0)
-		part.RotVelocity = Vector3.new(0, 0, 0)
-		part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-	end)
-	
-	-- Method 3: Force properties
-	pcall(function()
-		part.CanCollide = false
-		part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-		part.Massless = true
-	end)
-end
-
-local bringActive = false
-local bringLoop = nil
-
--- Real Server-Side Bring
-local function BringPlayerReal(player)
-	if player == LocalPlayer then return end
-	
-	local character = player.Character
-	if not character then return end
-	
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if not hrp then return end
-	
-	local myChar = LocalPlayer.Character
-	if not myChar then return end
-	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-	if not myHRP then return end
-	
-	-- Steal network ownership of entire character
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			StealNetworkOwnership(part)
-		end
+		RunService.Heartbeat:Connect(function()
+			-- UPDATED: SimulationRadius maksimal
+			sethiddenproperty(LocalPlayer, "SimulationRadius", 999999999)
+			for _, Part in pairs(Network.BaseParts) do
+				if Part:IsDescendantOf(Workspace) and not Part.Anchored then
+					Part.Velocity = Network.Velocity
+				end
+			end
+		end)
 	end
-	
-	-- Disable humanoid completely
-	if humanoid then
+
+	EnablePartControl()
+end
+
+local function ForcePart(v)
+	if v:IsA("BasePart") and not v.Anchored and not v.Parent:FindFirstChildOfClass("Humanoid") and not v.Parent:FindFirstChild("Head") and v.Name ~= "Handle" then
+		for _, x in ipairs(v:GetChildren()) do
+			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") then
+				x:Destroy()
+			end
+		end
+		if v:FindFirstChild("Attachment") then
+			v:FindFirstChild("Attachment"):Destroy()
+		end
+		if v:FindFirstChild("AlignPosition") then
+			v:FindFirstChild("AlignPosition"):Destroy()
+		end
+		if v:FindFirstChild("Torque") then
+			v:FindFirstChild("Torque"):Destroy()
+		end
+		
+		v.CanCollide = false
+		
+		-- UPDATED: Torque dengan kekuatan sangat tinggi
+		local Torque = Instance.new("Torque", v)
+		Torque.Torque = Vector3.new(999999999, 999999999, 999999999)
+		
+		-- UPDATED: AlignPosition dengan MaxForce, MaxVelocity, dan Responsiveness sangat tinggi
+		local AlignPosition = Instance.new("AlignPosition", v)
+		local Attachment2 = Instance.new("Attachment", v)
+		Torque.Attachment0 = Attachment2
+		
+		AlignPosition.MaxForce = 9e9  -- 9 miliar (nilai maksimal yang stabil)
+		AlignPosition.MaxVelocity = 9e9  -- 9 miliar
+		AlignPosition.Responsiveness = 999999  -- Responsiveness super tinggi
+		AlignPosition.RigidityEnabled = true  -- Tambahan untuk kekuatan ekstra
+		AlignPosition.Attachment0 = Attachment2
+		AlignPosition.Attachment1 = Attachment1
+		
+		-- UPDATED: Tambahkan NetworkOwnership untuk kontrol lebih baik
 		pcall(function()
-			humanoid:ChangeState(11) -- Physics
-			humanoid.PlatformStand = true
-			humanoid.AutoRotate = false
-			
-			-- Disable all states
-			for _, state in pairs(Enum.HumanoidStateType:GetEnumItems()) do
-				pcall(function()
-					humanoid:SetStateEnabled(state, false)
-				end)
-			end
+			v:SetNetworkOwner(LocalPlayer)
 		end)
 	end
-	
-	-- Remove ALL constraints and movers
-	for _, obj in pairs(hrp:GetChildren()) do
-		if not obj:IsA("Attachment") or obj.Name:match("Bring") then
-			if obj:IsA("BodyMover") or obj:IsA("Constraint") then
-				obj:Destroy()
+end
+
+local blackHoleActive = false
+local DescendantAddedConnection
+local UpdateConnection
+
+local function toggleBlackHole()
+	blackHoleActive = not blackHoleActive
+	if blackHoleActive then
+		Button.Text = "Bring Parts | On"
+		
+		for _, v in ipairs(Workspace:GetDescendants()) do
+			if v:IsA("BasePart") and not v.Anchored then
+				ForcePart(v)
 			end
 		end
-	end
-	
-	-- Clear existing bring objects
-	for _, obj in pairs(hrp:GetChildren()) do
-		if obj.Name:match("Bring") then
-			obj:Destroy()
+
+		DescendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
+			if blackHoleActive and v:IsA("BasePart") and not v.Anchored then
+				ForcePart(v)
+			end
+		end)
+
+		-- UPDATED: Update posisi dengan framerate tinggi menggunakan Heartbeat untuk performa maksimal
+		UpdateConnection = RunService.Heartbeat:Connect(function()
+			if blackHoleActive and humanoidRootPart then
+				Attachment1.WorldCFrame = humanoidRootPart.CFrame
+				Part.CFrame = humanoidRootPart.CFrame
+			end
+		end)
+	else
+		Button.Text = "Bring Parts | Off"
+		if DescendantAddedConnection then
+			DescendantAddedConnection:Disconnect()
 		end
-	end
-	
-	-- Anchor method (most reliable for network replication)
-	local anchorPart = Instance.new("Part")
-	anchorPart.Name = "BringAnchor"
-	anchorPart.Anchored = true
-	anchorPart.CanCollide = false
-	anchorPart.Transparency = 1
-	anchorPart.Size = Vector3.new(0.1, 0.1, 0.1)
-	anchorPart.Parent = hrp
-	
-	local weld = Instance.new("WeldConstraint")
-	weld.Name = "BringWeld"
-	weld.Part0 = anchorPart
-	weld.Part1 = hrp
-	weld.Parent = hrp
-	
-	-- AlignPosition method
-	local att0 = Instance.new("Attachment")
-	att0.Name = "BringAtt0"
-	att0.Parent = hrp
-	
-	local att1 = myHRP:FindFirstChild("BringTarget") or Instance.new("Attachment")
-	att1.Name = "BringTarget"
-	att1.Parent = myHRP
-	
-	local align = Instance.new("AlignPosition")
-	align.Name = "BringAlign"
-	align.Attachment0 = att0
-	align.Attachment1 = att1
-	align.MaxForce = math.huge
-	align.MaxVelocity = math.huge
-	align.Responsiveness = 200
-	align.RigidityEnabled = true
-	align.ApplyAtCenterOfMass = true
-	align.Parent = hrp
-	
-	-- BodyPosition method
-	local bodyPos = Instance.new("BodyPosition")
-	bodyPos.Name = "BringBodyPos"
-	bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-	bodyPos.P = 10000
-	bodyPos.D = 1000
-	bodyPos.Position = myHRP.Position
-	bodyPos.Parent = hrp
-	
-	-- BodyGyro method
-	local bodyGyro = Instance.new("BodyGyro")
-	bodyGyro.Name = "BringBodyGyro"
-	bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-	bodyGyro.P = 10000
-	bodyGyro.D = 500
-	bodyGyro.CFrame = myHRP.CFrame
-	bodyGyro.Parent = hrp
-	
-	-- Apply to all parts
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") and part ~= hrp then
-			StealNetworkOwnership(part)
-			part.CanCollide = false
-			
-			-- Weld to HRP
-			local weld = Instance.new("WeldConstraint")
-			weld.Name = "BringWeldPart"
-			weld.Part0 = hrp
-			weld.Part1 = part
-			weld.Parent = part
+		if UpdateConnection then
+			UpdateConnection:Disconnect()
 		end
 	end
 end
 
--- Start bringing
-local function StartBring()
-	bringActive = true
-	Button.Text = "Bring | On"
-	
-	-- Apply to all players
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer then
-			spawn(function()
-				BringPlayerReal(player)
-			end)
+local function getPlayer(name)
+	local lowerName = string.lower(name)
+	for _, p in pairs(Players:GetPlayers()) do
+		local lowerPlayer = string.lower(p.Name)
+		if string.find(lowerPlayer, lowerName) then
+			return p
+		elseif string.find(string.lower(p.DisplayName), lowerName) then
+			return p
 		end
 	end
-	
-	-- Handle respawns
-	for _, player in pairs(Players:GetPlayers()) do
-		player.CharacterAdded:Connect(function(char)
-			if bringActive then
-				wait(1)
-				BringPlayerReal(player)
-			end
-		end)
-	end
-	
-	-- Continuous update
-	bringLoop = RunService.Heartbeat:Connect(function()
-		if not bringActive then return end
-		
-		local myChar = LocalPlayer.Character
-		if not myChar then return end
-		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-		if not myHRP then return end
-		
-		local targetPos = myHRP.Position
-		local targetCF = myHRP.CFrame
-		
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= LocalPlayer and player.Character then
-				local char = player.Character
-				local hrp = char:FindFirstChild("HumanoidRootPart")
-				
-				if hrp then
-					-- Continuously steal ownership
-					StealNetworkOwnership(hrp)
-					
-					-- Update anchor position
-					local anchor = hrp:FindFirstChild("BringAnchor")
-					if anchor then
-						anchor.CFrame = targetCF
-					end
-					
-					-- Update BodyPosition
-					local bodyPos = hrp:FindFirstChild("BringBodyPos")
-					if bodyPos then
-						bodyPos.Position = targetPos
-					end
-					
-					-- Update BodyGyro
-					local bodyGyro = hrp:FindFirstChild("BringBodyGyro")
-					if bodyGyro then
-						bodyGyro.CFrame = targetCF
-					end
-					
-					-- Force CFrame (aggressive)
-					pcall(function()
-						hrp.CFrame = targetCF
-						hrp.Velocity = Vector3.new(0, 0, 0)
-						hrp.RotVelocity = Vector3.new(0, 0, 0)
-						hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-						hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-					end)
-					
-					-- Maintain properties
-					pcall(function()
-						hrp.CanCollide = false
-						hrp.Massless = true
-						hrp.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-					end)
-				end
+end
+
+local player = nil
+
+local function VDOYZQL_fake_script() -- Box.Script 
+	local script = Instance.new('Script', Box)
+
+	script.Parent.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			player = getPlayer(Box.Text)
+			if player then
+				Box.Text = player.Name
+				print("Player found:", player.Name)
+			else
+				print("Player not found")
 			end
 		end
 	end)
 end
+coroutine.wrap(VDOYZQL_fake_script)()
 
--- Stop bringing
-local function StopBring()
-	bringActive = false
-	Button.Text = "Bring | Off"
-	
-	if bringLoop then
-		bringLoop:Disconnect()
-		bringLoop = nil
-	end
-	
-	-- Clean all players
-	for _, player in pairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character then
-			local char = player.Character
-			local hrp = char:FindFirstChild("HumanoidRootPart")
-			local humanoid = char:FindFirstChildOfClass("Humanoid")
-			
-			if hrp then
-				-- Remove bring objects
-				for _, obj in pairs(hrp:GetChildren()) do
-					if obj.Name:match("Bring") then
-						obj:Destroy()
-					end
-				end
-			end
-			
-			-- Remove welds from all parts
-			for _, part in pairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then
-					for _, obj in pairs(part:GetChildren()) do
-						if obj.Name:match("BringWeld") then
-							obj:Destroy()
-						end
-					end
-					
-					pcall(function()
-						part.Massless = false
-					end)
-				end
-			end
-			
-			-- Reset humanoid
-			if humanoid then
-				pcall(function()
-					humanoid.PlatformStand = false
-					humanoid.AutoRotate = true
-					humanoid:ChangeState(3)
-					
-					for _, state in pairs(Enum.HumanoidStateType:GetEnumItems()) do
-						pcall(function()
-							humanoid:SetStateEnabled(state, true)
-						end)
-					end
-				end)
-			end
+local function JUBNQKI_fake_script() -- Button.Script 
+	local script = Instance.new('Script', Button)
+
+	script.Parent.MouseButton1Click:Connect(function()
+		if player then
+			character = player.Character or player.CharacterAdded:Wait()
+			humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+			toggleBlackHole()
+		else
+			print("Player is not selected")
 		end
-	end
+	end)
 end
-
--- Button click
-Button.MouseButton1Click:Connect(function()
-	if bringActive then
-		StopBring()
-	else
-		StartBring()
-	end
-end)
+coroutine.wrap(JUBNQKI_fake_script)()
