@@ -1,14 +1,12 @@
 -- Gui to Lua
--- Version: 3.2 - Multiple Bring Methods
+-- Version: 3.2 - REAL BRING (NOT VISUAL ONLY)
 
 -- Instances:
 
 local Gui = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
 local Label = Instance.new("TextLabel")
-local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
 local Button = Instance.new("TextButton")
-local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
 
 --Properties:
 
@@ -26,7 +24,6 @@ Main.Size = UDim2.new(0.240350261, 0, 0.166880623, 0)
 Main.Active = true
 Main.Draggable = true
 
--- Label
 Label.Name = "Label"
 Label.Parent = Main
 Label.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
@@ -35,13 +32,12 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(1, 0, 0.35, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Bring All Players by FayintXHub"
+Label.Text = "Real Bring - Server Replicated"
 Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
 Label.TextWrapped = true
 
--- Button
 Button.Name = "Button"
 Button.Parent = Main
 Button.BackgroundColor3 = Color3.fromRGB(95, 95, 95)
@@ -51,401 +47,346 @@ Button.BorderSizePixel = 0
 Button.Position = UDim2.new(0.183284417, 0, 0.5, 0)
 Button.Size = UDim2.new(0.629427791, 0, 0.4, 0)
 Button.Font = Enum.Font.Nunito
-Button.Text = "Bring Players | Off"
+Button.Text = "Bring | Off"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.TextScaled = true
 Button.TextSize = 28.000
 Button.TextWrapped = true
-
-UITextSizeConstraint_3.Parent = Button
-UITextSizeConstraint_3.MaxTextSize = 28
 
 -- Scripts:
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
 
-mainStatus = true
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+-- Toggle GUI
+game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessedEvent)
 	if input.KeyCode == Enum.KeyCode.RightControl and not gameProcessedEvent then
-		mainStatus = not mainStatus
-		Main.Visible = mainStatus
+		Main.Visible = not Main.Visible
 	end
 end)
 
-local Folder = Instance.new("Folder", Workspace)
-Folder.Name = "BringFolder"
-local Part = Instance.new("Part", Folder)
-local Attachment1 = Instance.new("Attachment", Part)
-Part.Anchored = true
-Part.CanCollide = false
-Part.Transparency = 1
-Part.Size = Vector3.new(0.1, 0.1, 0.1)
-
-if not getgenv().Network then
-	getgenv().Network = {
-		BaseParts = {},
-		Velocity = Vector3.new(14.46262424, 14.46262424, 14.46262424)
-	}
-
-	Network.RetainPart = function(Part)
-		if Part:IsA("BasePart") and Part:IsDescendantOf(Workspace) then
-			table.insert(Network.BaseParts, Part)
-			Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
-			Part.CanCollide = false
-		end
-	end
-
-	local function EnablePartControl()
+-- Advanced Network Control
+local function SetupNetworkOwnership()
+	settings().Physics.AllowSleep = false
+	settings().Physics.PhysicsEnvironmentalThrottle = Enum.EnviromentalPhysicsThrottle.Disabled
+	
+	LocalPlayer.MaximumSimulationRadius = math.pow(math.huge, math.huge)
+	sethiddenproperty(LocalPlayer, "SimulationRadius", math.pow(math.huge, math.huge))
+	
+	RunService.Heartbeat:Connect(function()
+		sethiddenproperty(LocalPlayer, "SimulationRadius", math.pow(math.huge, math.huge))
 		LocalPlayer.ReplicationFocus = Workspace
-		RunService.Heartbeat:Connect(function()
-			sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
-			for _, Part in pairs(Network.BaseParts) do
-				if Part:IsDescendantOf(Workspace) then
-					Part.Velocity = Network.Velocity
-				end
-			end
-		end)
-	end
+	end)
+end
 
-	EnablePartControl()
+SetupNetworkOwnership()
+
+-- Aggressive Network Ownership Stealer
+local function StealNetworkOwnership(part)
+	if not part:IsA("BasePart") then return end
+	
+	-- Method 1: Direct ownership claim
+	pcall(function()
+		part:SetNetworkOwner(nil)
+	end)
+	
+	pcall(function()
+		part:SetNetworkOwner(LocalPlayer)
+	end)
+	
+	-- Method 2: Velocity manipulation
+	pcall(function()
+		part.Velocity = Vector3.new(0, 0, 0)
+		part.RotVelocity = Vector3.new(0, 0, 0)
+		part.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+		part.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+	end)
+	
+	-- Method 3: Force properties
+	pcall(function()
+		part.CanCollide = false
+		part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+		part.Massless = true
+	end)
 end
 
 local bringActive = false
 local bringLoop = nil
 
-local function ClearBringObjects(character)
-	if not character then return end
+-- Real Server-Side Bring
+local function BringPlayerReal(player)
+	if player == LocalPlayer then return end
 	
-	for _, part in ipairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			-- Remove all bring-related objects
-			for _, child in ipairs(part:GetChildren()) do
-				if child.Name:match("Bring") or child:IsA("BodyPosition") or 
-				   child:IsA("BodyVelocity") or child:IsA("BodyGyro") or
-				   child:IsA("AlignPosition") or child:IsA("AlignOrientation") or
-				   child:IsA("Torque") or child:IsA("VectorForce") then
-					child:Destroy()
-				end
-			end
-		end
-	end
-end
-
-local function ApplyMultipleBringMethods(character, targetCFrame)
+	local character = player.Character
 	if not character then return end
-	if character == LocalPlayer.Character then return end
 	
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	
 	if not hrp then return end
 	
-	-- Clear existing objects first
-	ClearBringObjects(character)
+	local myChar = LocalPlayer.Character
+	if not myChar then return end
+	local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+	if not myHRP then return end
 	
-	-- METHOD 1: Network Ownership
-	Network.RetainPart(hrp)
-	
-	-- Disable humanoid control
-	if humanoid then
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-		humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-		humanoid:ChangeState(11)
-		humanoid.PlatformStand = true
-	end
-	
-	-- Disable collisions
-	for _, part in ipairs(character:GetDescendants()) do
+	-- Steal network ownership of entire character
+	for _, part in pairs(character:GetDescendants()) do
 		if part:IsA("BasePart") then
+			StealNetworkOwnership(part)
+		end
+	end
+	
+	-- Disable humanoid completely
+	if humanoid then
+		pcall(function()
+			humanoid:ChangeState(11) -- Physics
+			humanoid.PlatformStand = true
+			humanoid.AutoRotate = false
+			
+			-- Disable all states
+			for _, state in pairs(Enum.HumanoidStateType:GetEnumItems()) do
+				pcall(function()
+					humanoid:SetStateEnabled(state, false)
+				end)
+			end
+		end)
+	end
+	
+	-- Remove ALL constraints and movers
+	for _, obj in pairs(hrp:GetChildren()) do
+		if not obj:IsA("Attachment") or obj.Name:match("Bring") then
+			if obj:IsA("BodyMover") or obj:IsA("Constraint") then
+				obj:Destroy()
+			end
+		end
+	end
+	
+	-- Clear existing bring objects
+	for _, obj in pairs(hrp:GetChildren()) do
+		if obj.Name:match("Bring") then
+			obj:Destroy()
+		end
+	end
+	
+	-- Anchor method (most reliable for network replication)
+	local anchorPart = Instance.new("Part")
+	anchorPart.Name = "BringAnchor"
+	anchorPart.Anchored = true
+	anchorPart.CanCollide = false
+	anchorPart.Transparency = 1
+	anchorPart.Size = Vector3.new(0.1, 0.1, 0.1)
+	anchorPart.Parent = hrp
+	
+	local weld = Instance.new("WeldConstraint")
+	weld.Name = "BringWeld"
+	weld.Part0 = anchorPart
+	weld.Part1 = hrp
+	weld.Parent = hrp
+	
+	-- AlignPosition method
+	local att0 = Instance.new("Attachment")
+	att0.Name = "BringAtt0"
+	att0.Parent = hrp
+	
+	local att1 = myHRP:FindFirstChild("BringTarget") or Instance.new("Attachment")
+	att1.Name = "BringTarget"
+	att1.Parent = myHRP
+	
+	local align = Instance.new("AlignPosition")
+	align.Name = "BringAlign"
+	align.Attachment0 = att0
+	align.Attachment1 = att1
+	align.MaxForce = math.huge
+	align.MaxVelocity = math.huge
+	align.Responsiveness = 200
+	align.RigidityEnabled = true
+	align.ApplyAtCenterOfMass = true
+	align.Parent = hrp
+	
+	-- BodyPosition method
+	local bodyPos = Instance.new("BodyPosition")
+	bodyPos.Name = "BringBodyPos"
+	bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+	bodyPos.P = 10000
+	bodyPos.D = 1000
+	bodyPos.Position = myHRP.Position
+	bodyPos.Parent = hrp
+	
+	-- BodyGyro method
+	local bodyGyro = Instance.new("BodyGyro")
+	bodyGyro.Name = "BringBodyGyro"
+	bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+	bodyGyro.P = 10000
+	bodyGyro.D = 500
+	bodyGyro.CFrame = myHRP.CFrame
+	bodyGyro.Parent = hrp
+	
+	-- Apply to all parts
+	for _, part in pairs(character:GetDescendants()) do
+		if part:IsA("BasePart") and part ~= hrp then
+			StealNetworkOwnership(part)
 			part.CanCollide = false
-			part.Massless = true
-		end
-	end
-	
-	hrp.CanCollide = false
-	hrp.Massless = true
-	
-	-- METHOD 2: AlignPosition
-	local Attachment2 = Instance.new("Attachment")
-	Attachment2.Name = "BringAttachment"
-	Attachment2.Parent = hrp
-	
-	local AlignPosition = Instance.new("AlignPosition")
-	AlignPosition.Name = "BringAlign"
-	AlignPosition.MaxForce = 9e9
-	AlignPosition.MaxVelocity = 9e9
-	AlignPosition.Responsiveness = 200
-	AlignPosition.ApplyAtCenterOfMass = true
-	AlignPosition.ReactionForceEnabled = false
-	AlignPosition.RigidityEnabled = true
-	AlignPosition.Attachment0 = Attachment2
-	AlignPosition.Attachment1 = Attachment1
-	AlignPosition.Parent = hrp
-	
-	-- METHOD 3: AlignOrientation
-	local AlignOrientation = Instance.new("AlignOrientation")
-	AlignOrientation.Name = "BringAlignOrientation"
-	AlignOrientation.MaxTorque = 9e9
-	AlignOrientation.MaxAngularVelocity = 9e9
-	AlignOrientation.Responsiveness = 200
-	AlignOrientation.RigidityEnabled = true
-	AlignOrientation.Attachment0 = Attachment2
-	AlignOrientation.Attachment1 = Attachment1
-	AlignOrientation.Parent = hrp
-	
-	-- METHOD 4: BodyPosition
-	local BodyPos = Instance.new("BodyPosition")
-	BodyPos.Name = "BringBodyPosition"
-	BodyPos.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-	BodyPos.D = 1250
-	BodyPos.P = 10000
-	BodyPos.Position = targetCFrame.Position
-	BodyPos.Parent = hrp
-	
-	-- METHOD 5: BodyVelocity
-	local BodyVel = Instance.new("BodyVelocity")
-	BodyVel.Name = "BringBodyVelocity"
-	BodyVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-	BodyVel.Velocity = Vector3.new(0, 0, 0)
-	BodyVel.Parent = hrp
-	
-	-- METHOD 6: BodyGyro
-	local BodyGyro = Instance.new("BodyGyro")
-	BodyGyro.Name = "BringBodyGyro"
-	BodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-	BodyGyro.D = 500
-	BodyGyro.P = 3000
-	BodyGyro.CFrame = targetCFrame
-	BodyGyro.Parent = hrp
-	
-	-- METHOD 7: VectorForce
-	local VectorForce = Instance.new("VectorForce")
-	VectorForce.Name = "BringVectorForce"
-	VectorForce.Force = Vector3.new(0, 0, 0)
-	VectorForce.ApplyAtCenterOfMass = true
-	VectorForce.RelativeTo = Enum.ActuatorRelativeTo.World
-	VectorForce.Attachment0 = Attachment2
-	VectorForce.Parent = hrp
-	
-	-- METHOD 8: Torque
-	local Torque = Instance.new("Torque")
-	Torque.Name = "BringTorque"
-	Torque.Torque = Vector3.new(0, 0, 0)
-	Torque.Attachment0 = Attachment2
-	Torque.Parent = hrp
-	
-	-- Apply to all body parts for extra control
-	for _, part in ipairs(character:GetDescendants()) do
-		if part:IsA("BasePart") and part ~= hrp and part.Name ~= "HumanoidRootPart" then
-			Network.RetainPart(part)
 			
-			local attach = Instance.new("Attachment")
-			attach.Name = "BringAttachment2"
-			attach.Parent = part
-			
-			local align = Instance.new("AlignPosition")
-			align.Name = "BringAlign2"
-			align.MaxForce = 9e9
-			align.MaxVelocity = 9e9
-			align.Responsiveness = 200
-			align.Attachment0 = attach
-			align.Attachment1 = Attachment1
-			align.Parent = part
+			-- Weld to HRP
+			local weld = Instance.new("WeldConstraint")
+			weld.Name = "BringWeldPart"
+			weld.Part0 = hrp
+			weld.Part1 = part
+			weld.Parent = part
 		end
 	end
 end
 
-local function StopBringing()
-	-- Stop the update loop
-	if bringLoop then
-		bringLoop:Disconnect()
-		bringLoop = nil
-	end
+-- Start bringing
+local function StartBring()
+	bringActive = true
+	Button.Text = "Bring | On"
 	
-	-- Clean up all players
-	for _, player in ipairs(Players:GetPlayers()) do
-		if player ~= LocalPlayer and player.Character then
-			local character = player.Character
-			local humanoid = character:FindFirstChildOfClass("Humanoid")
-			
-			ClearBringObjects(character)
-			
-			-- Reset humanoid
-			if humanoid then
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-				humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
-				humanoid.PlatformStand = false
-				humanoid:ChangeState(3)
-			end
-			
-			-- Reset physics
-			for _, part in ipairs(character:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.Massless = false
-				end
-			end
+	-- Apply to all players
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer then
+			spawn(function()
+				BringPlayerReal(player)
+			end)
 		end
 	end
 	
-	-- Clear network parts related to players
-	local newBaseParts = {}
-	for _, part in pairs(Network.BaseParts) do
-		if not part:FindFirstAncestorOfClass("Model") or 
-		   not Players:GetPlayerFromCharacter(part:FindFirstAncestorOfClass("Model")) then
-			table.insert(newBaseParts, part)
-		end
+	-- Handle respawns
+	for _, player in pairs(Players:GetPlayers()) do
+		player.CharacterAdded:Connect(function(char)
+			if bringActive then
+				wait(1)
+				BringPlayerReal(player)
+			end
+		end)
 	end
-	Network.BaseParts = newBaseParts
-end
-
-local playerConnections = {}
-
-local function setupPlayerBring(player)
-	if player == LocalPlayer then return end
 	
-	-- Handle current character
-	if player.Character then
+	-- Continuous update
+	bringLoop = RunService.Heartbeat:Connect(function()
+		if not bringActive then return end
+		
 		local myChar = LocalPlayer.Character
-		if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-			ApplyMultipleBringMethods(player.Character, myChar.HumanoidRootPart.CFrame)
-		end
-	end
-	
-	-- Handle character respawn
-	if playerConnections[player] then
-		playerConnections[player]:Disconnect()
-	end
-	
-	playerConnections[player] = player.CharacterAdded:Connect(function(character)
-		if bringActive then
-			wait(1) -- Wait for character to fully load
-			local myChar = LocalPlayer.Character
-			if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-				ApplyMultipleBringMethods(character, myChar.HumanoidRootPart.CFrame)
+		if not myChar then return end
+		local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return end
+		
+		local targetPos = myHRP.Position
+		local targetCF = myHRP.CFrame
+		
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character then
+				local char = player.Character
+				local hrp = char:FindFirstChild("HumanoidRootPart")
+				
+				if hrp then
+					-- Continuously steal ownership
+					StealNetworkOwnership(hrp)
+					
+					-- Update anchor position
+					local anchor = hrp:FindFirstChild("BringAnchor")
+					if anchor then
+						anchor.CFrame = targetCF
+					end
+					
+					-- Update BodyPosition
+					local bodyPos = hrp:FindFirstChild("BringBodyPos")
+					if bodyPos then
+						bodyPos.Position = targetPos
+					end
+					
+					-- Update BodyGyro
+					local bodyGyro = hrp:FindFirstChild("BringBodyGyro")
+					if bodyGyro then
+						bodyGyro.CFrame = targetCF
+					end
+					
+					-- Force CFrame (aggressive)
+					pcall(function()
+						hrp.CFrame = targetCF
+						hrp.Velocity = Vector3.new(0, 0, 0)
+						hrp.RotVelocity = Vector3.new(0, 0, 0)
+						hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+						hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+					end)
+					
+					-- Maintain properties
+					pcall(function()
+						hrp.CanCollide = false
+						hrp.Massless = true
+						hrp.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+					end)
+				end
 			end
 		end
 	end)
 end
 
-local function toggleBring()
-	bringActive = not bringActive
+-- Stop bringing
+local function StopBring()
+	bringActive = false
+	Button.Text = "Bring | Off"
 	
-	if bringActive then
-		Button.Text = "Bring Players | On"
-		
-		local myCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-		local myHRP = myCharacter:WaitForChild("HumanoidRootPart")
-		
-		-- Setup all current players
-		for _, player in ipairs(Players:GetPlayers()) do
-			setupPlayerBring(player)
-		end
-		
-		-- Handle new players
-		playerConnections.PlayerAdded = Players.PlayerAdded:Connect(function(player)
-			if bringActive then
-				setupPlayerBring(player)
-			end
-		end)
-		
-		-- Handle players leaving
-		playerConnections.PlayerRemoving = Players.PlayerRemoving:Connect(function(player)
-			if playerConnections[player] then
-				playerConnections[player]:Disconnect()
-				playerConnections[player] = nil
-			end
-		end)
-		
-		-- Continuous update loop - Updates position, forces, and CFrame
-		bringLoop = RunService.Heartbeat:Connect(function()
-			if bringActive and myCharacter and myHRP then
-				local targetCFrame = myHRP.CFrame
-				Attachment1.WorldCFrame = targetCFrame
-				Part.CFrame = targetCFrame
-				
-				-- Update all players
-				for _, player in ipairs(Players:GetPlayers()) do
-					if player ~= LocalPlayer and player.Character then
-						local char = player.Character
-						local hrp = char:FindFirstChild("HumanoidRootPart")
-						
-						if hrp then
-							-- Update BodyPosition
-							local bodyPos = hrp:FindFirstChild("BringBodyPosition")
-							if bodyPos then
-								bodyPos.Position = targetCFrame.Position
-							end
-							
-							-- Update BodyVelocity - pull toward player
-							local bodyVel = hrp:FindFirstChild("BringBodyVelocity")
-							if bodyVel then
-								local direction = (targetCFrame.Position - hrp.Position).Unit
-								bodyVel.Velocity = direction * 100
-							end
-							
-							-- Update BodyGyro
-							local bodyGyro = hrp:FindFirstChild("BringBodyGyro")
-							if bodyGyro then
-								bodyGyro.CFrame = targetCFrame
-							end
-							
-							-- Update VectorForce
-							local vectorForce = hrp:FindFirstChild("BringVectorForce")
-							if vectorForce then
-								local direction = (targetCFrame.Position - hrp.Position).Unit
-								vectorForce.Force = direction * 50000
-							end
-							
-							-- Direct CFrame manipulation (METHOD 9)
-							pcall(function()
-								hrp.CFrame = targetCFrame
-							end)
-							
-							-- Direct Velocity manipulation (METHOD 10)
-							pcall(function()
-								hrp.Velocity = Vector3.new(0, 0, 0)
-								hrp.RotVelocity = Vector3.new(0, 0, 0)
-							end)
-						end
+	if bringLoop then
+		bringLoop:Disconnect()
+		bringLoop = nil
+	end
+	
+	-- Clean all players
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character then
+			local char = player.Character
+			local hrp = char:FindFirstChild("HumanoidRootPart")
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			
+			if hrp then
+				-- Remove bring objects
+				for _, obj in pairs(hrp:GetChildren()) do
+					if obj.Name:match("Bring") then
+						obj:Destroy()
 					end
 				end
 			end
-		end)
-		
-	else
-		Button.Text = "Bring Players | Off"
-		StopBringing()
-		
-		-- Disconnect all connections
-		for key, connection in pairs(playerConnections) do
-			if typeof(connection) == "RBXScriptConnection" then
-				connection:Disconnect()
+			
+			-- Remove welds from all parts
+			for _, part in pairs(char:GetDescendants()) do
+				if part:IsA("BasePart") then
+					for _, obj in pairs(part:GetChildren()) do
+						if obj.Name:match("BringWeld") then
+							obj:Destroy()
+						end
+					end
+					
+					pcall(function()
+						part.Massless = false
+					end)
+				end
+			end
+			
+			-- Reset humanoid
+			if humanoid then
+				pcall(function()
+					humanoid.PlatformStand = false
+					humanoid.AutoRotate = true
+					humanoid:ChangeState(3)
+					
+					for _, state in pairs(Enum.HumanoidStateType:GetEnumItems()) do
+						pcall(function()
+							humanoid:SetStateEnabled(state, true)
+						end)
+					end
+				end)
 			end
 		end
-		playerConnections = {}
 	end
 end
 
+-- Button click
 Button.MouseButton1Click:Connect(function()
-	toggleBring()
+	if bringActive then
+		StopBring()
+	else
+		StartBring()
+	end
 end)
