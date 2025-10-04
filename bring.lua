@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.2 - REAL BRING (NO ADMIN REQUIRED)
+-- Version: 3.2 - EXTREME POWER (100x)
 
 -- Instances:
 
@@ -54,7 +54,7 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(1, 0, 0.160583943, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Bring Parts by FayintXHub"
+Label.Text = "Bring Unanchored Parts by FayintXHub [EXTREME]"
 Label.TextColor3 = Color3.fromRGB(255, 255, 255)
 Label.TextScaled = true
 Label.TextSize = 14.000
@@ -90,7 +90,7 @@ local Workspace = game:GetService("Workspace")
 local character
 local humanoidRootPart
 
-local mainStatus = true
+mainStatus = true
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 	if input.KeyCode == Enum.KeyCode.RightControl and not gameProcessedEvent then
 		mainStatus = not mainStatus
@@ -98,142 +98,136 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 	end
 end)
 
--- REAL BRING WITHOUT ADMIN - Menggunakan Network Ownership
-local function ForcePart(v)
-	if v:IsA("BasePart") 
-		and not v.Anchored
-		and not v.Parent:FindFirstChildOfClass("Humanoid")
-		and not v.Parent:FindFirstChild("Head")
-		and v.Name ~= "Handle"
-	then
-		-- CEK apakah part bisa di-claim ownership
-		local canOwn = pcall(function()
-			if v:CanSetNetworkOwnership() then
-				-- CLAIM NETWORK OWNERSHIP ke LocalPlayer
-				v:SetNetworkOwnership(LocalPlayer)
-			end
-		end)
-		
-		if canOwn then
-			-- Hapus semua constraint lama
-			for _, x in ipairs(v:GetChildren()) do
-				if x:IsA("BodyMover") or x:IsA("BodyPosition") or x:IsA("BodyVelocity") or x:IsA("BodyGyro") or x:IsA("AlignPosition") or x:IsA("Torque") then
-					x:Destroy()
+local Folder = Instance.new("Folder", Workspace)
+local Part = Instance.new("Part", Folder)
+local Attachment1 = Instance.new("Attachment", Part)
+Part.Anchored = true
+Part.CanCollide = false
+Part.Transparency = 1
+
+if not getgenv().Network then
+	getgenv().Network = {
+		BaseParts = {},
+		-- VELOCITY 100X LEBIH KUAT
+		Velocity = Vector3.new(1446.262424, 1446.262424, 1446.262424) -- 100x dari 14.46
+	}
+
+	Network.RetainPart = function(Part)
+		if Part:IsA("BasePart") and Part:IsDescendantOf(Workspace) then
+			table.insert(Network.BaseParts, Part)
+			Part.CustomPhysicalProperties = PhysicalProperties.new(0, 0, 0, 0, 0)
+			Part.CanCollide = false
+		end
+	end
+
+	local function EnablePartControl()
+		LocalPlayer.ReplicationFocus = Workspace
+		RunService.Heartbeat:Connect(function()
+			sethiddenproperty(LocalPlayer, "SimulationRadius", math.huge)
+			for _, Part in pairs(Network.BaseParts) do
+				if Part:IsDescendantOf(Workspace) then
+					Part.Velocity = Network.Velocity
 				end
 			end
-			
-			v.CanCollide = false
-			v.Massless = true
-			
-			-- BODYVELOCITY - Lebih smooth dan ter-replikasi dengan network ownership
-			local bodyVelocity = Instance.new("BodyVelocity")
-			bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-			bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-			bodyVelocity.P = 1250
-			bodyVelocity.Parent = v
-			
-			-- BODYGYRO - Stabilitas rotasi
-			local bodyGyro = Instance.new("BodyGyro")
-			bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-			bodyGyro.P = 10000
-			bodyGyro.D = 500
-			bodyGyro.CFrame = v.CFrame
-			bodyGyro.Parent = v
-			
-			-- Tag untuk tracking
-			v:SetAttribute("FayintXBring", true)
+		end)
+	end
+
+	EnablePartControl()
+end
+
+-- FUNGSI FORCE PART DENGAN KEKUATAN 100X
+local function ForcePart(v)
+	if v:IsA("BasePart") 
+		and not v.Anchored  -- Hanya unanchored parts
+		and not v.Parent:FindFirstChildOfClass("Humanoid") 
+		and not v.Parent:FindFirstChild("Head") 
+		and v.Name ~= "Handle" then
+		
+		-- Hapus BodyMovers yang ada
+		for _, x in ipairs(v:GetChildren()) do
+			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") then
+				x:Destroy()
+			end
 		end
+		
+		-- Hapus attachment/constraint lama
+		if v:FindFirstChild("Attachment") then
+			v:FindFirstChild("Attachment"):Destroy()
+		end
+		if v:FindFirstChild("AlignPosition") then
+			v:FindFirstChild("AlignPosition"):Destroy()
+		end
+		if v:FindFirstChild("Torque") then
+			v:FindFirstChild("Torque"):Destroy()
+		end
+		
+		v.CanCollide = false
+		
+		-- TORQUE 100X LEBIH KUAT
+		local Torque = Instance.new("Torque", v)
+		Torque.Torque = Vector3.new(10000000, 10000000, 10000000) -- 100x dari 100000
+		
+		local AlignPosition = Instance.new("AlignPosition", v)
+		local Attachment2 = Instance.new("Attachment", v)
+		
+		Torque.Attachment0 = Attachment2
+		
+		-- ALIGN POSITION SETTINGS - EXTREME POWER
+		AlignPosition.MaxForce = math.huge * 100  -- Force maksimal
+		AlignPosition.MaxVelocity = math.huge  -- Velocity maksimal
+		AlignPosition.Responsiveness = 20000  -- 100x dari 200 - Respons super cepat
+		AlignPosition.ApplyAtCenterOfMass = true
+		AlignPosition.ReactionForceEnabled = false
+		AlignPosition.RigidityEnabled = true  -- Lebih rigid/kaku
+		
+		AlignPosition.Attachment0 = Attachment2
+		AlignPosition.Attachment1 = Attachment1
+		
+		-- Tambahan: Hapus massa untuk membuat lebih ringan
+		if v:IsA("BasePart") then
+			v.Massless = true
+			v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0, 0, 0, 0)
+		end
+		
+		print("Bringing unanchored part with EXTREME POWER:", v.Name)
 	end
 end
 
-local bringActive = false
-local descendantAddedConnection
-local updateConnection
+local blackHoleActive = false
+local DescendantAddedConnection
+local UpdateConnection
 
-local function toggleBring()
-	bringActive = not bringActive
-	if bringActive then
-		Button.Text = "Bring | On"
+local function toggleBlackHole()
+	blackHoleActive = not blackHoleActive
+	if blackHoleActive then
+		Button.Text = "Bring Parts | On [EXTREME]"
 		
-		-- Apply ke semua parts yang bisa di-own
+		-- Scan semua parts yang ada
 		for _, v in ipairs(Workspace:GetDescendants()) do
-			task.spawn(ForcePart, v)
+			ForcePart(v)
 		end
 
-		-- Monitor parts baru
-		descendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
-			if bringActive then
-				task.wait(0.1) -- Wait for part to load
-				task.spawn(ForcePart, v)
+		-- Monitor parts baru yang ditambahkan
+		DescendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
+			if blackHoleActive then
+				ForcePart(v)
 			end
 		end)
 
-		-- UPDATE LOOP menggunakan BodyVelocity untuk smooth movement
-		updateConnection = RunService.Heartbeat:Connect(function(deltaTime)
-			if humanoidRootPart and bringActive then
-				local targetPos = humanoidRootPart.Position
-				
-				for _, v in ipairs(Workspace:GetDescendants()) do
-					if v:IsA("BasePart") and v:GetAttribute("FayintXBring") then
-						local bodyVel = v:FindFirstChildOfClass("BodyVelocity")
-						if bodyVel and v.Parent then
-							-- Hitung direction dan distance
-							local direction = (targetPos - v.Position)
-							local distance = direction.Magnitude
-							
-							if distance > 0.5 then
-								-- Velocity berdasarkan jarak (semakin jauh semakin cepat)
-								local speed = math.clamp(distance * 10, 50, 500)
-								bodyVel.Velocity = direction.Unit * speed
-							else
-								-- Jika sudah dekat, perlambat
-								bodyVel.Velocity = direction * 20
-							end
-							
-							-- Update ownership terus menerus
-							pcall(function()
-								if v:CanSetNetworkOwnership() then
-									v:SetNetworkOwnership(LocalPlayer)
-								end
-							end)
-						end
-					end
-				end
+		-- Update posisi target dengan Heartbeat untuk performa maksimal
+		UpdateConnection = RunService.Heartbeat:Connect(function()
+			if blackHoleActive and humanoidRootPart then
+				Attachment1.WorldCFrame = humanoidRootPart.CFrame
+				Part.CFrame = humanoidRootPart.CFrame
 			end
 		end)
 	else
-		Button.Text = "Bring | Off"
-		
-		-- Disconnect semua connections
-		if descendantAddedConnection then
-			descendantAddedConnection:Disconnect()
-			descendantAddedConnection = nil
+		Button.Text = "Bring Parts | Off"
+		if DescendantAddedConnection then
+			DescendantAddedConnection:Disconnect()
 		end
-		
-		if updateConnection then
-			updateConnection:Disconnect()
-			updateConnection = nil
-		end
-		
-		-- Cleanup
-		for _, v in ipairs(Workspace:GetDescendants()) do
-			if v:IsA("BasePart") and v:GetAttribute("FayintXBring") then
-				v:SetAttribute("FayintXBring", nil)
-				
-				-- Hapus BodyMovers
-				for _, x in ipairs(v:GetChildren()) do
-					if x:IsA("BodyVelocity") or x:IsA("BodyGyro") or x:IsA("BodyPosition") then
-						x:Destroy()
-					end
-				end
-				
-				-- Release network ownership
-				pcall(function()
-					if v:CanSetNetworkOwnership() then
-						v:SetNetworkOwnershipAuto()
-					end
-				end)
-			end
+		if UpdateConnection then
+			UpdateConnection:Disconnect()
 		end
 	end
 end
@@ -252,24 +246,34 @@ end
 
 local player = nil
 
-Box.FocusLost:Connect(function(enterPressed)
-	if enterPressed then
-		player = getPlayer(Box.Text)
-		if player then
-			Box.Text = player.Name
-			print("Player target set to:", player.Name)
-		else
-			print("Player not found")
-		end
-	end
-end)
+local function VDOYZQL_fake_script()
+	local script = Instance.new('Script', Box)
 
-Button.MouseButton1Click:Connect(function()
-	if player then
-		character = player.Character or player.CharacterAdded:Wait()
-		humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-		toggleBring()
-	else
-		print("Player target is not selected")
-	end
-end)
+	script.Parent.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			player = getPlayer(Box.Text)
+			if player then
+				Box.Text = player.Name
+				print("Player found:", player.Name)
+			else
+				print("Player not found")
+			end
+		end
+	end)
+end
+coroutine.wrap(VDOYZQL_fake_script)()
+
+local function JUBNQKI_fake_script()
+	local script = Instance.new('Script', Button)
+
+	script.Parent.MouseButton1Click:Connect(function()
+		if player then
+			character = player.Character or player.CharacterAdded:Wait()
+			humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+			toggleBlackHole()
+		else
+			print("Player is not selected")
+		end
+	end)
+end
+coroutine.wrap(JUBNQKI_fake_script)()
