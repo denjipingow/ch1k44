@@ -1,5 +1,5 @@
 -- Gui to Lua
--- Version: 3.2 - Ultra Power Edition
+-- Version: 3.2 MASSIVE EDITION
 
 -- Instances:
 
@@ -54,8 +54,8 @@ Label.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Label.BorderSizePixel = 0
 Label.Size = UDim2.new(1, 0, 0.160583943, 0)
 Label.FontFace = Font.new("rbxasset://fonts/families/Nunito.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-Label.Text = "Bring Parts by FayintXHub"
-Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+Label.Text = "MASSIVE Bring Parts - FayintXHub"
+Label.TextColor3 = Color3.fromRGB(255, 0, 0)
 Label.TextScaled = true
 Label.TextSize = 14.000
 Label.TextWrapped = true
@@ -70,7 +70,7 @@ Button.BorderSizePixel = 0
 Button.Position = UDim2.new(0.183284417, 0, 0.656760991, 0)
 Button.Size = UDim2.new(0.629427791, 0, 0.277372271, 0)
 Button.Font = Enum.Font.Nunito
-Button.Text = "Bring | Off"
+Button.Text = "MASSIVE | OFF"
 Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 Button.TextScaled = true
 Button.TextSize = 28.000
@@ -98,223 +98,203 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
 	end
 end)
 
--- ULTRA EXTREME FORCE VALUES (100× LIPAT)
-local ULTRA_FORCE = 5000000 -- 100× dari 50,000
-local ULTRA_VELOCITY = 50000 -- 100× dari 500
-local ULTRA_POWER = 5000000
-local ULTRA_RANGE = 200000 -- 1000× dari 200 (200,000 studs)
-local TELEPORT_THRESHOLD = 15000 -- 1000× dari 15
+-- Multiple target parts untuk tarikan masif
+local targetFolder = Instance.new("Folder", Workspace)
+targetFolder.Name = "MassiveBringTarget_FayintX"
 
--- Fungsi untuk apply ULTRA FORCE ke part (TIDAK VISUAL, REAL PHYSICS)
-local function applyUltraForce(v)
-	if not v:IsA("BasePart") then return end
-	if v.Anchored then return end
-	if v.Parent:FindFirstChildOfClass("Humanoid") then return end
-	if v.Parent:FindFirstChild("Head") then return end
-	if v.Name == "Handle" then return end
+-- Membuat multiple anchor points untuk tarikan yang lebih kuat
+local targetParts = {}
+local targetAttachments = {}
+
+for i = 1, 10 do -- 10 anchor points untuk tarikan super masif
+	local targetPart = Instance.new("Part", targetFolder)
+	local targetAttachment = Instance.new("Attachment", targetPart)
+	targetPart.Anchored = true
+	targetPart.CanCollide = false
+	targetPart.Transparency = 1
+	targetPart.Size = Vector3.new(0.01, 0.01, 0.01)
+	targetPart.Name = "MassiveAnchor" .. i
 	
-	-- Clear existing constraints
-	pcall(function()
+	table.insert(targetParts, targetPart)
+	table.insert(targetAttachments, targetAttachment)
+end
+
+-- Fungsi untuk memaksa part bergerak ke target dengan kekuatan MASIF
+local function ForcePart(v)
+	if v:IsA("BasePart") 
+		and not v.Anchored
+		and not v.Parent:FindFirstChildOfClass("Humanoid")
+		and not v.Parent:FindFirstChild("Head")
+		and v.Name ~= "Handle"
+		and not v:IsDescendantOf(targetFolder)
+	then
+		-- Hapus semua physics constraint yang ada
 		for _, x in ipairs(v:GetChildren()) do
-			if x:IsA("BodyMover") or x:IsA("Constraint") then
+			if x:IsA("BodyMover") or x:IsA("RocketPropulsion") or x:IsA("AlignPosition") or x:IsA("Torque") or x:IsA("BodyVelocity") or x:IsA("BodyPosition") then
 				x:Destroy()
 			end
 		end
-	end)
-	
-	-- Set physical properties untuk REAL movement
-	pcall(function()
+		
+		-- Nonaktifkan semua collision
 		v.CanCollide = false
 		v.CanTouch = false
 		v.CanQuery = false
-		v.CustomPhysicalProperties = PhysicalProperties.new(0.01, 0.1, 0, 0.5, 0.5)
-	end)
-	
-	-- ULTRA BODY VELOCITY (REAL FORCE)
-	local bodyVel = Instance.new("BodyVelocity")
-	bodyVel.Name = "UltraBringVelocity"
-	bodyVel.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
-	bodyVel.Velocity = Vector3.new(0, 0, 0)
-	bodyVel.Parent = v
-	
-	-- ULTRA BODY POSITION (REAL FORCE)
-	local bodyPos = Instance.new("BodyPosition")
-	bodyPos.Name = "UltraBringPosition"
-	bodyPos.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
-	bodyPos.P = ULTRA_POWER
-	bodyPos.D = ULTRA_POWER / 50
-	bodyPos.Position = humanoidRootPart.Position
-	bodyPos.Parent = v
-	
-	-- ADDITIONAL BODY GYRO untuk stability
-	local bodyGyro = Instance.new("BodyGyro")
-	bodyGyro.Name = "UltraBringGyro"
-	bodyGyro.MaxTorque = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
-	bodyGyro.P = ULTRA_POWER / 10
-	bodyGyro.D = ULTRA_POWER / 100
-	bodyGyro.Parent = v
+		
+		-- Set properties untuk tarikan maksimal
+		if v:IsA("Part") then
+			v.CustomPhysicalProperties = PhysicalProperties.new(
+				0.01, -- Density super ringan
+				0, -- Friction nol
+				0, -- Elasticity nol
+				1, -- ElasticityWeight
+				1  -- FrictionWeight
+			)
+		end
+		
+		-- Buat multiple AlignPosition untuk tarikan MASIF
+		for i = 1, math.min(3, #targetAttachments) do -- 3 AlignPosition per part
+			local alignPosition = Instance.new("AlignPosition", v)
+			local attachmentInPart = Instance.new("Attachment", v)
+			attachmentInPart.Name = "MassiveAttachment" .. i
+			
+			-- KONFIGURASI MASIF
+			alignPosition.MaxForce = math.huge
+			alignPosition.MaxVelocity = math.huge
+			alignPosition.Responsiveness = 200 -- Maksimal responsiveness
+			alignPosition.RigidityEnabled = true -- Enable rigidity untuk tarikan instant
+			alignPosition.ApplyAtCenterOfMass = true
+			alignPosition.Mode = Enum.PositionAlignmentMode.OneAttachment
+			alignPosition.Attachment0 = attachmentInPart
+			alignPosition.Attachment1 = targetAttachments[i]
+		end
+		
+		-- BodyVelocity untuk boost kecepatan
+		local bodyVelocity = Instance.new("BodyVelocity", v)
+		bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+		
+		-- BodyPosition sebagai backup
+		local bodyPosition = Instance.new("BodyPosition", v)
+		bodyPosition.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+		bodyPosition.D = 10000 -- Damping super tinggi
+		bodyPosition.P = 1000000 -- Power super tinggi
+		
+		-- Anti-rotation dengan Torque masif
+		local torque = Instance.new("Torque", v)
+		torque.Torque = Vector3.new(math.huge, math.huge, math.huge)
+		torque.Attachment0 = v:FindFirstChildOfClass("Attachment")
+		
+		-- BodyAngularVelocity untuk stop rotasi
+		local bodyAngularVelocity = Instance.new("BodyAngularVelocity", v)
+		bodyAngularVelocity.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+		bodyAngularVelocity.AngularVelocity = Vector3.new(0, 0, 0)
+	end
 end
 
 local bringActive = false
 local descendantAddedConnection
-local updateConnections = {}
-
--- ULTRA AGGRESSIVE FORCE LOOP (REAL PHYSICS)
-local function ultraForceLoop()
-	-- Multi-threaded ultra force application
-	for threadId = 1, 5 do
-		local updateConnection = RunService.Heartbeat:Connect(function()
-			if not bringActive then return end
-			if not humanoidRootPart or not humanoidRootPart.Parent then return end
-			
-			pcall(function()
-				local targetPos = humanoidRootPart.Position
-				local partsProcessed = 0
-				
-				for _, v in ipairs(Workspace:GetDescendants()) do
-					if v:IsA("BasePart") and not v.Anchored then
-						-- Cek jarak dalam ULTRA RANGE
-						local distance = (v.Position - targetPos).Magnitude
-						
-						if distance <= ULTRA_RANGE then
-							partsProcessed = partsProcessed + 1
-							
-							-- Apply force jika belum ada
-							local bodyPos = v:FindFirstChild("UltraBringPosition")
-							local bodyVel = v:FindFirstChild("UltraBringVelocity")
-							local bodyGyro = v:FindFirstChild("UltraBringGyro")
-							
-							if not bodyPos or not bodyVel or not bodyGyro then
-								task.spawn(applyUltraForce, v)
-							else
-								-- Update REAL forces
-								bodyPos.Position = targetPos
-								bodyPos.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
-								
-								-- Calculate velocity dengan ULTRA SPEED
-								local direction = (targetPos - v.Position)
-								if direction.Magnitude > 1 then
-									local speed = math.min(direction.Magnitude * 10, ULTRA_VELOCITY)
-									bodyVel.Velocity = direction.Unit * speed
-									bodyVel.MaxForce = Vector3.new(ULTRA_FORCE, ULTRA_FORCE, ULTRA_FORCE)
-								else
-									bodyVel.Velocity = Vector3.new(0, 0, 0)
-								end
-								
-								-- Update gyro untuk stabilitas
-								bodyGyro.CFrame = humanoidRootPart.CFrame
-							end
-							
-							-- INSTANT TELEPORT jika terlalu jauh (REAL PULL)
-							if distance > TELEPORT_THRESHOLD then
-								v.CFrame = CFrame.new(targetPos + Vector3.new(
-									math.random(-20, 20),
-									math.random(-20, 20),
-									math.random(-20, 20)
-								))
-								v.Velocity = Vector3.new(0, 0, 0)
-								v.RotVelocity = Vector3.new(0, 0, 0)
-							end
-						end
-					end
-					
-					-- Limit per frame untuk performance
-					if partsProcessed >= 50 then
-						break
-					end
-				end
-			end)
-		end)
-		
-		table.insert(updateConnections, updateConnection)
-	end
-end
+local heartbeatConnection
 
 local function toggleBring()
 	bringActive = not bringActive
 	if bringActive then
-		Button.Text = "Bring | On"
+		Button.Text = "MASSIVE | ON"
+		Button.TextColor3 = Color3.fromRGB(0, 255, 0)
 		
-		-- INSTANT APPLY TO ALL PARTS IN RANGE (MULTIPLE PASSES)
-		for pass = 1, 3 do
-			task.spawn(function()
-				for _, v in ipairs(Workspace:GetDescendants()) do
-					if v:IsA("BasePart") and not v.Anchored and humanoidRootPart then
-						local distance = (v.Position - humanoidRootPart.Position).Magnitude
-						if distance <= ULTRA_RANGE then
-							task.spawn(applyUltraForce, v)
-						end
-					end
-				end
-			end)
-			task.wait(0.05)
+		-- Process semua parts yang ada
+		for _, v in ipairs(Workspace:GetDescendants()) do
+			task.spawn(ForcePart, v)
 		end
-		
-		-- MONITOR NEW PARTS (ULTRA AGGRESSIVE)
+
+		-- Auto-process parts baru
 		descendantAddedConnection = Workspace.DescendantAdded:Connect(function(v)
-			if bringActive and v:IsA("BasePart") and humanoidRootPart then
-				task.wait(0.05)
-				local distance = (v.Position - humanoidRootPart.Position).Magnitude
-				if distance <= ULTRA_RANGE then
-					for i = 1, 2 do
-						task.spawn(applyUltraForce, v)
+			if bringActive then
+				task.spawn(ForcePart, v)
+			end
+		end)
+
+		-- Update posisi target dengan multiple threads
+		spawn(function()
+			while bringActive and task.wait() do
+				if humanoidRootPart then
+					local cf = humanoidRootPart.CFrame
+					
+					-- Update semua anchor points
+					for i, attachment in ipairs(targetAttachments) do
+						local offset = CFrame.new(
+							math.sin(i * math.pi / 5) * 0.1,
+							math.cos(i * math.pi / 5) * 0.1,
+							0
+						)
+						attachment.WorldCFrame = cf * offset
+					end
+					
+					-- Update BodyPosition & BodyVelocity untuk semua parts
+					for _, v in ipairs(Workspace:GetDescendants()) do
+						if v:IsA("BodyPosition") then
+							v.Position = cf.Position
+						elseif v:IsA("BodyVelocity") then
+							local part = v.Parent
+							if part and part:IsA("BasePart") then
+								local direction = (cf.Position - part.Position).Unit
+								v.Velocity = direction * 10000 -- Kecepatan masif
+							end
+						end
 					end
 				end
 			end
 		end)
 		
-		-- START ULTRA FORCE LOOPS
-		ultraForceLoop()
-		
-		-- ADDITIONAL TELEPORT LOOP untuk parts yang sangat jauh
-		task.spawn(function()
-			while bringActive do
-				pcall(function()
-					if humanoidRootPart then
-						local targetPos = humanoidRootPart.Position
-						for _, v in ipairs(Workspace:GetDescendants()) do
-							if v:IsA("BasePart") and not v.Anchored then
-								local distance = (v.Position - targetPos).Magnitude
-								if distance > TELEPORT_THRESHOLD and distance <= ULTRA_RANGE then
-									if v:FindFirstChild("UltraBringPosition") then
-										-- FORCE TELEPORT untuk instant bring
-										v.CFrame = CFrame.new(targetPos + Vector3.new(
-											math.random(-15, 15),
-											math.random(-15, 15),
-											math.random(-15, 15)
-										))
-										v.Velocity = Vector3.new(0, 0, 0)
-										v.RotVelocity = Vector3.new(0, 0, 0)
-									end
-								end
-							end
+		-- Extra heartbeat connection untuk update super cepat
+		heartbeatConnection = RunService.Heartbeat:Connect(function()
+			if bringActive and humanoidRootPart then
+				local cf = humanoidRootPart.CFrame
+				
+				-- Force update posisi parts yang jauh
+				for _, v in ipairs(Workspace:GetDescendants()) do
+					if v:IsA("BasePart") and not v.Anchored and not v:IsDescendantOf(targetFolder) then
+						local distance = (v.Position - cf.Position).Magnitude
+						
+						-- Teleport parts yang terlalu jauh
+						if distance > 100 then
+							v.CFrame = cf + Vector3.new(
+								math.random(-5, 5),
+								math.random(0, 10),
+								math.random(-5, 5)
+							)
 						end
 					end
-				end)
-				task.wait(0.1)
+				end
 			end
 		end)
 		
 	else
-		Button.Text = "Bring | Off"
+		Button.Text = "MASSIVE | OFF"
+		Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 		
-		-- DISCONNECT ALL
 		if descendantAddedConnection then
 			descendantAddedConnection:Disconnect()
+			descendantAddedConnection = nil
 		end
 		
-		for _, connection in ipairs(updateConnections) do
-			connection:Disconnect()
+		if heartbeatConnection then
+			heartbeatConnection:Disconnect()
+			heartbeatConnection = nil
 		end
-		updateConnections = {}
 		
-		-- AGGRESSIVE CLEANUP (REAL REMOVAL)
+		-- Cleanup semua physics objects
 		for _, v in ipairs(Workspace:GetDescendants()) do
-			pcall(function()
-				if v.Name == "UltraBringVelocity" or v.Name == "UltraBringPosition" or v.Name == "UltraBringGyro" then
+			if v:IsA("AlignPosition") or v:IsA("Torque") or v:IsA("BodyVelocity") or v:IsA("BodyPosition") or v:IsA("BodyAngularVelocity") then
+				local parent = v.Parent
+				if parent and not parent:FindFirstChildOfClass("Humanoid") then
 					v:Destroy()
 				end
-			end)
+			end
+			
+			-- Cleanup attachments
+			if v:IsA("Attachment") and v.Name:match("MassiveAttachment") then
+				v:Destroy()
+			end
 		end
 	end
 end
@@ -338,7 +318,7 @@ Box.FocusLost:Connect(function(enterPressed)
 		player = getPlayer(Box.Text)
 		if player then
 			Box.Text = player.Name
-			print("Player target set to:", player.Name)
+			print("MASSIVE TARGET SET:", player.Name)
 		else
 			print("Player not found")
 		end
@@ -351,6 +331,6 @@ Button.MouseButton1Click:Connect(function()
 		humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 		toggleBring()
 	else
-		print("Player target is not selected")
+		print("SELECT TARGET FIRST!")
 	end
 end)
